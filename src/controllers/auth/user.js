@@ -1,6 +1,7 @@
 import { defaultLimit, defaultPage } from "../../utils/defaultData.js";
 import jsonResponse from "../../utils/jsonResponse.js";
 import prisma from "../../utils/prismaClient.js";
+import uploadToCLoudinary from "../../utils/uploadToCloudinary.js";
 import validateInput from "../../utils/validateInput.js";
 
 const module_name = "user";
@@ -192,81 +193,88 @@ export const updateUser = async (req, res) => {
       const {
         roleId,
         name,
+        fullname,
         email,
+        about,
         phone,
         address,
+        language,
         billingAddress,
         city,
         country,
         postalCode,
-        image,
-        // password,
         initialPaymentAmount,
         initialPaymentDue,
         installmentTime,
+        billingFirstName,     
+        billingLastName,      
+        billingCompany,       
+        billingCountry,      
+        billingEmail,         
+        billingPhone,
+        apartment,
+        state,                              
       } = req.body;
 
-      //validate input
-      const inputValidation = validateInput(
-        [name, email, phone, address, billingAddress],
-        ["Name", "Email", "Phone", "Address", "Billing Address"]
-      );
+     let imageUrl = req.user?.image;
 
-      if (inputValidation) {
-        return res.status(400).json(jsonResponse(false, inputValidation, null));
-      }
+if (req.file) {
+  try {
+    const result = await uploadToCLoudinary(req.file, "user_profiles");
+    imageUrl = result.secure_url;
+  } catch (err) {
+    console.error("Cloudinary Upload Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload image to Cloudinary",
+    });
+  }
+}
 
-      //Check user if exists
-      // const user = await tx.user.findFirst({
-      //   where: {
-      //     NOT: [{ id: req.params.id }],
-      //     OR: [{ email: req.body.email }, { phone: req.body.phone }],
-      //     isDeleted: false,
-      //   },
-      // });
-
-      // if (user) {
-      //   return res
-      //     .status(409)
-      //     .json(jsonResponse(false, "User already exists", null));
-      // }
-
-      //Hash the password
-      // const hashedPassword = hashPassword(password);
-      const updateUser = await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: req.params.id },
         data: {
           roleId,
           name,
+          fullname,
           email,
+          about,
           phone,
           address,
+          language,
           billingAddress,
           city,
           country,
           postalCode,
-          image,
-          // password: hashedPassword,
+          image: imageUrl, // this is the cloudinary url
           initialPaymentAmount,
           initialPaymentDue,
           installmentTime,
-          updatedBy: req.user.id,
+          billingFirstName,     
+          billingLastName,      
+          billingCompany,       
+          billingCountry,      
+          billingEmail,         
+          billingPhone,
+          apartment,
+          state,   
+          updatedBy: req.user?.id,
         },
       });
 
-      if (updateUser) {
-        return res
-          .status(200)
-          .json(jsonResponse(true, `Profile has been updated.`, updateUser));
-      } else {
-        return res
-          .status(404)
-          .json(jsonResponse(false, "Profile has not been updated", null));
-      }
+      return res.status(200).json({
+        success: true,
+        message: "Profile has been updated.",
+        user: updatedUser,
+      });
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json(jsonResponse(false, error, null));
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 

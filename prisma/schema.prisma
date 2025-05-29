@@ -65,6 +65,16 @@ model User {
     country              String?
     city                 String?
     postalCode           String?
+    about                String?
+    language             String?
+    state                String?
+    apartment            String?
+    billingFirstName     String?
+    billingLastName      String?
+    billingCompany       String?
+    billingCountry       String?
+    billingEmail         String?
+    billingPhone         String?
     image                String?  @default("images/user/user.png")
     password             String?  @db.Text
     otp                  Int?

@@ -33,8 +33,12 @@ router.delete("/v1/auth/users/:id", usersRemove, verify, deleteUser);
 
 
 //For customer
-router.get("/v1/customer/auth/users/:id", verify, getUser);
-router.put("/v1/customer/auth/users/:id", verify, updateUser);
+router.get("/v1/customer/auth/users/:id",  getUser);
+router.put("/v1/customer/auth/users/:id", upload.single("image"),  updateUser);
+
+
+
+
 
 //next Trade
 // router.post("/v1/brokerusers", createBrokerUser);
