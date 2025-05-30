@@ -79,12 +79,12 @@ export const register = async (req, res) => {
           initialPaymentDue,
           installmentTime,
           createdBy: req?.user?.id,
-          isActive: false // Newly created users are inactive until verification
+          isActive: false 
         }
       });
 
       // Construct verification link
-     const verifyLink = `http://localhost:3000/verify-email?id=${createUser.id}`;
+     const verifyLink = `https://mockshark.vercel.app/verify-email?id=${createUser.id}`;
 
 
       // Send verification email
