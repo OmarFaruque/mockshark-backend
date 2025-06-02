@@ -15,11 +15,11 @@ import verify from "../../utils/verifyToken.js";
 
 const router = express.Router();
 
-router.post("/v1/reviews", verify, createReview);
+router.post("/v1/reviews",  createReview);
 router.get("/v1/reviews", verify, getReviews);
 router.get("/v1/reviews/:id", verify, getReview);
 router.put("/v1/reviews/:id", verify, updateReview);
-router.delete("/v1/reviews/:id", verify, deleteReview);
+router.delete("/v1/reviews/:id", deleteReview);
 
 //For customer
 router.get("/v1/customer/reviewsByProduct/:id", getReviewsForCustomer);

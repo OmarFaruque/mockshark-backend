@@ -9,11 +9,12 @@ import validateInput from "../../utils/validateInput.js";
 
 const module_name = "product";
 
+
+
 //create product
 export const createProduct = async (req, res) => {
   try {
     return await prisma.$transaction(async (tx) => {
-      
       const {
         name,
         brandId,
@@ -33,12 +34,12 @@ export const createProduct = async (req, res) => {
         isFeatured,
         isActive,
       } = req.body;
-console.log(" fileSize:", fileSize);
-console.log("resolution:", resolution);
+     console.log({ reqBody: req.body });
+
       //validate input
       const inputValidation = validateInput(
-        [name, categoryId, shortDescription],
-        ["Name", "Category", "Short Description"]
+        [name,  shortDescription],
+        ["Name",  "Short Description"]
       );
 
       if (inputValidation) {
@@ -57,14 +58,14 @@ console.log("resolution:", resolution);
       }
 
       //get user name for slugify
-      const user = await tx.user.findFirst({
-        where: { id: req.user.parentId ? req.user.parentId : req.user.id },
-      });
+      // const user = await tx.user.findFirst({
+      //   where: { id: req.user.parentId ? req.user.parentId : req.user.id },
+      // });
 
-      if (!user)
-        return res
-          .status(404)
-          .json(jsonResponse(false, "This user does not exist", null));
+      // if (!user)
+      //   return res
+      //     .status(404)
+      //     .json(jsonResponse(false, "This user does not exist", null));
 
       //create multiple products
       let newProducts = [];
@@ -73,27 +74,27 @@ console.log("resolution:", resolution);
       //loop through request body array to upload multiple products at a time
       // for (let i = 0; i < requestBodyLength; i++) {
       //check if product exists
-      const product = await tx.product.findFirst({
-        where: {
-          userId: req.user.parentId ? req.user.parentId : req.user.id,
-          name: name,
-          isDeleted: false,
-        },
-      });
+      // const product = await tx.product.findFirst({
+      //   where: {
+      //     // userId: req.user.parentId ? req.user.parentId : req.user.id,
+      //     name: name,
+      //     isDeleted: false,
+      //   },
+      // });
 
-      if (
-        product &&
-        product.slug === `${slugify(user.name)}-${slugify(req.body.name)}`
-      )
-        return res
-          .status(409)
-          .json(
-            jsonResponse(
-              false,
-              `${req.body.name} already exists. Change its name.`,
-              null
-            )
-          );
+      // if (
+      //   product &&
+      //   product.slug === `${slugify(user.name)}-${slugify(req.body.name)}`
+      // )
+      //   return res
+      //     .status(409)
+      //     .json(
+      //       jsonResponse(
+      //         false,
+      //         `${req.body.name} already exists. Change its name.`,
+      //         null
+      //       )
+      //     );
 
       //calculation for discount prices
       let newProductAttributes = [];
@@ -116,13 +117,13 @@ console.log("resolution:", resolution);
               (req.body.productAttributes[j].discountPercent / 100),
         });
       }
-
+       console.log( newProductAttributes)
       //if there is no image selected
       if (!req.files || req.files.length === 0) {
         //create products
         let newProduct = await prisma.product.create({
           data: {
-            userId: req.user.parentId ? req.user.parentId : req.user.id,
+            // userId: req.user.parentId ? req.user.parentId : req.user.id,
             brandId: brandId,
             categoryId: categoryId,
             subcategoryId: subcategoryId,
@@ -131,17 +132,17 @@ console.log("resolution:", resolution);
             supplierId: supplierId,
             productCode: productCode,
             barcode: barcode,
-            resolution : resolution,
-            fileSize : fileSize,
             name: name,
             shortDescription: shortDescription,
             longDescription: longDescription,
+            resolution : resolution,
+            fileSize: fileSize,
             sku: sku,
             isTrending: isTrending === "true" ? true : false,
             isFeatured: isFeatured === "true" ? true : false,
             isActive: isActive === "true" ? true : false,
-            createdBy: req.user.id,
-            slug: `${slugify(user.name)}-${slugify(req.body.name)}`,
+            // createdBy: req.user.id,
+            slug: `${slugify(req.body.name)}`,
             productAttributes: {
               create: newProductAttributes,
             },
@@ -168,7 +169,42 @@ console.log("resolution:", resolution);
 
       //upload image
       // const imageUpload = await uploadImage(req.files);
+
       const newImages = [];
+      console.log(req.files ,module_name)
+      console.log(
+
+  {
+                // userId: req.user.parentId ? req.user.parentId : req.user.id,
+                brandId: brandId,
+                categoryId: categoryId,
+                subcategoryId: subcategoryId,
+                subsubcategoryId: subsubcategoryId,
+                campaignId: campaignId,
+                supplierId: supplierId,
+                productCode: productCode,
+                barcode: barcode,
+                sku: sku,
+                name: name,
+                shortDescription: shortDescription,
+                longDescription: longDescription,
+                resolution: resolution,
+                fileSize: fileSize,
+                isTrending: isTrending === "true" ? true : false,
+                isFeatured: isFeatured === "true" ? true : false,
+                isActive: isActive === "true" ? true : false,
+                // createdBy: req.user.id,
+                slug: `${slugify(req.body.name)}`,
+                productAttributes: {
+                  newProductAttributes,
+                },
+                images: {
+                  newImages,
+                },
+              },
+
+
+      )
       await uploadToCLoudinary(
         req.files,
         module_name,
@@ -177,9 +213,9 @@ console.log("resolution:", resolution);
             console.error("error", error);
             return res.status(404).json(jsonResponse(false, error, null));
           }
-
+        console.log("result", result.secure_url)
           newImages.push({ image: result.secure_url });
-
+        console.log(newImages)
           if (!result.secure_url) {
             return res
               .status(404)
@@ -191,13 +227,14 @@ console.log("resolution:", resolution);
                 )
               );
           }
-
+          console.log(req.files)
+          
           if (req.files.length === newImages.length) {
             //create products
             console.log({ newImages });
             let newProduct = await prisma.product.create({
               data: {
-                userId: "01",
+                // userId: req.user.parentId ? req.user.parentId : req.user.id,
                 brandId: brandId,
                 categoryId: categoryId,
                 subcategoryId: subcategoryId,
@@ -206,17 +243,17 @@ console.log("resolution:", resolution);
                 supplierId: supplierId,
                 productCode: productCode,
                 barcode: barcode,
-                resolution : resolution,
-                fileSize : fileSize,
                 sku: sku,
+                resolution: resolution,
+                fileSize: fileSize,
                 name: name,
                 shortDescription: shortDescription,
                 longDescription: longDescription,
                 isTrending: isTrending === "true" ? true : false,
                 isFeatured: isFeatured === "true" ? true : false,
                 isActive: isActive === "true" ? true : false,
-                createdBy: req.user.id,
-                slug: `${slugify(user.name)}-${slugify(req.body.name)}`,
+                // createdBy: req.user.id,
+                slug: `${slugify(req.body.name)}`,
                 productAttributes: {
                   create: newProductAttributes,
                 },
@@ -225,7 +262,7 @@ console.log("resolution:", resolution);
                 },
               },
             });
-
+console.log({ newProduct });
             if (!newProduct) {
               return res
                 .status(200)
@@ -252,7 +289,10 @@ console.log("resolution:", resolution);
         }
       );
     });
-  } catch (error) {
+  }
+  
+  
+  catch (error) {
     console.log(error);
     return res.status(500).json(jsonResponse(false, error, null));
   }
@@ -1339,7 +1379,7 @@ export const getProductForCustomer = async (req, res) => {
   try {
     const product = await prisma.product.findFirst({
       where: {
-        slug: req.params.slug,
+        id: req.params.id,
         isDeleted: false,
         isActive: true,
       },
@@ -1351,6 +1391,8 @@ export const getProductForCustomer = async (req, res) => {
         name: true,
         shortDescription: true,
         longDescription: true,
+        fileSize : true,
+        resolution : true,
         sku: true,
         viewCount: true,
         slug: true,

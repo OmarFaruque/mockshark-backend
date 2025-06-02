@@ -42,8 +42,7 @@ const router = express.Router();
 
 router.post(
   "/v1/products",
- 
-  verify,
+  // verify,
   upload.array("images"),
   createProduct
 );
@@ -51,6 +50,7 @@ router.get("/v1/products-email/:id", verify, sendProductEmail);
 router.get("/v1/products",  verify, getProducts);
 router.get("/v1/user/products/", productUserList, verify, getProductsByUser);
 router.get("/v1/products/:slug", productSingle, verify, getProduct);
+
 router.put(
   "/v1/products/:id",
   productEdit,
@@ -58,6 +58,7 @@ router.put(
   upload.array("images"),
   updateProduct
 );
+
 router.put("/v1/products/attributes/:id", verify, updateProductAttribute);
 router.put(
   "/v1/products/images/:id",
@@ -66,6 +67,7 @@ router.put(
   upload.single("image"),
   updateProductImage
 );
+
 router.put("/v1/products/:id/viewCount", increaseProductViewCount);
 router.put("/v1/products/:id/ban", productBan, verify, banProduct);
 router.delete(
@@ -94,7 +96,7 @@ router.delete("/v1/products-images/:id", verify, deleteProductImage);
 
 // For Customer
 router.get("/v1/customer/products", getProductsForCustomer);
-router.get("/v1/customer/products/:slug", getProductForCustomer);
+router.get("/v1/customer/products/:id", getProductForCustomer);
 router.get("/v1/customer/trending-products", getTrendingProductsForCustomer);
 router.get("/v1/customer/featured-products", getFeaturedProductsForCustomer);
 
