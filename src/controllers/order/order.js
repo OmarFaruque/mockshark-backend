@@ -22,44 +22,78 @@ export const createOrder = async (req, res) => {
       const {
         userId,
         couponId,
-        customerName,
-        customerPhone,
-        customerAddress,
-        customerBillingAddress,
-        customerEmail,
-        customerCity,
-        customerPostalCode,
+        // customerName,
+        // customerPhone,
+        // customerAddress,
+        // customerBillingAddress,
+        // customerEmail,
+        // customerCity,
+        // customerPostalCode,
         invoiceNumber,
-        paymentMethod,
-        deliveryChargeInside,
-        deliveryChargeOutside,
-        // totalItems,
-        // subtotalCost,
-        // subtotal,
+        // paymentMethod,
+        // deliveryChargeInside,
+        // deliveryChargeOutside,
+        // // totalItems,
+        // // subtotalCost,
+        // // subtotal,
+           billingFirstName,     
+    billingLastName,     
+    billingCompany,       
+    billingCountry,       
+    billingEmail,         
+    billingPhone ,        
+    address,              
+    apartment,            
+    city,                 
+    state,                
+    postalCode,
         orderItems,
       } = req.body;
 
       //validate input
       const inputValidation = validateInput(
         [
-          customerName,
-          customerPhone,
-          customerAddress,
-          customerBillingAddress,
-          customerEmail,
-          customerCity,
-          invoiceNumber,
-          paymentMethod,
+          // customerName,
+          // customerPhone,
+          // customerAddress,
+          // customerBillingAddress,
+          // customerEmail,
+          // customerCity,
+          // invoiceNumber,
+          // paymentMethod,
+           billingFirstName,     
+    billingLastName,     
+    billingCompany,       
+    billingCountry,       
+    billingEmail,         
+    billingPhone ,        
+    address,              
+    apartment,            
+    city,                 
+    state,                
+    postalCode,
         ],
         [
-          "Name",
-          "Phone",
-          "Shipping Address",
-          "Billing Address",
-          "Email",
+          // "Name",
+          // "Phone",
+          // "Shipping Address",
+          // "Billing Address",
+          // "Email",
+          // "City",
+          // "Invoice",
+          // "Payment Method",
+          "Billing First Name",
+          "Billing Last Name",
+          "Billing Company",
+          "Billing Country",
+          "Billing Email",
+          "Billing Phone",
+          "Address",
+          "Apartment",
           "City",
-          "Invoice",
-          "Payment Method",
+          "State",
+          "Postal Code",
+          
         ]
       );
 
@@ -125,8 +159,14 @@ export const createOrder = async (req, res) => {
 
           //calculate subtotal and subtotal cost price
           // subtotal = subtotal + discountedRetailPrice;
-          subtotal = subtotal + orderItems[i]?.totalPrice;
-          subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
+          // subtotal = subtotal + orderItems[i]?.totalPrice;
+          // subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
+          const itemTotal = orderItems[i].quantity * productAttribute.discountedRetailPrice;
+const itemCost = orderItems[i].quantity * productAttribute.costPrice;
+
+subtotal += itemTotal;
+subtotalCost += itemCost;
+
           // subtotalCost =
           //   subtotalCost + orderItems[i].quantity * productAttribute.costPrice;
 
@@ -146,25 +186,39 @@ export const createOrder = async (req, res) => {
       //create order
       let newOrder = await tx.order.create({
         data: {
-          userId,
+         user: {
+      connect: { id: userId }
+    },
           couponId,
-          customerName,
-          customerPhone,
-          customerAddress,
-          customerEmail,
-          customerBillingAddress,
-          customerCity,
-          customerPostalCode,
+          // customerName,
+          // customerPhone,
+          // customerAddress,
+          // customerEmail,
+          // customerBillingAddress,
+          // customerCity,
+          // customerPostalCode,
           invoiceNumber,
+           billingFirstName,     
+    billingLastName,     
+    billingCompany,       
+    billingCountry,       
+    billingEmail,         
+    billingPhone ,        
+    address,              
+    apartment,            
+    city,                 
+    state,                
+    postalCode,
           totalItems: totalNumberOfItems,
           subtotalCost: subtotalCost,
           subtotal:
-            subtotal +
-            (deliveryChargeInside ?? deliveryChargeOutside) -
-            (coupon?.discountAmount ?? 0),
-          paymentMethod,
-          deliveryChargeInside: deliveryChargeInside ?? null,
-          deliveryChargeOutside: deliveryChargeOutside ?? null,
+            subtotal,
+            // +
+            // (deliveryChargeInside ?? deliveryChargeOutside) -
+            // (coupon?.discountAmount ?? 0),
+          // paymentMethod,
+          // deliveryChargeInside: deliveryChargeInside ?? null,
+          // deliveryChargeOutside: deliveryChargeOutside ?? null,
           orderItems: {
             create: newOrderItems,
           },
@@ -176,6 +230,32 @@ export const createOrder = async (req, res) => {
           .status(200)
           .json(jsonResponse(false, `Order cannot be placed`, null));
       }
+for (let i = 0; i < newOrderItems.length; i++) {
+  const product = await tx.product.findFirst({
+    where: {
+      id: newOrderItems[i].productId,
+      isDeleted: false,
+      isActive: true,
+    },
+  });
+
+  if (!product?.downloadUrl) continue;
+
+ try {
+  await tx.downloadUrl.create({
+    data: {
+      userId,
+      productId: newOrderItems[i].productId,
+      orderId: newOrder.id,
+      downloadUrl: product.downloadUrl,
+    },
+  });
+  console.log("DownloadUrl created");
+} catch (err) {
+  console.error("Failed to insert download url:", err);
+}
+
+}
 
       //reduce stock amount
       for (let i = 0; i < orderItems.length; i++) {
@@ -198,21 +278,21 @@ export const createOrder = async (req, res) => {
 
       //send email invoice
       const emailGenerate = await sendEmail(
-        customerEmail,
-        `Order Invoice #${invoiceNumber}`,
-        `<p>Dear ${customerName},</p>
+        billingEmail,
+        `Order Invoice `,
+        `<p>Dear ${billingFirstName},</p>
 
           <p>Your order has been placed successfully!</p>
 
           <p><b>Order Information:</b></p>
-          <p><b>Phone:</b> ${customerPhone}</p>
-          <p><b>Shipping Address:</b> ${customerAddress}</p>
-          <p><b>Billing Address:</b> ${customerBillingAddress}</p>
-          <p><b>City:</b> ${customerCity}</p>
-          <p><b>Postal Code:</b> ${customerPostalCode}</p>
-          <p><b>Payment Method:</b> ${paymentMethod}</p>
+          <p><b>Phone:</b> ${billingPhone}</p>
+          <p><b>Shipping Address:</b> ${address}</p>
+          <p><b>Billing Address:</b> ${address}</p>
+          <p><b>City:</b> ${city}</p>
+          <p><b>Postal Code:</b> ${postalCode}</p>
+          
           <p><b>Total Items:</b> ${totalNumberOfItems}</p>
-          <p><b>Order Status:</b> Pending</p>
+          <p><b>Order Status:</b> Shipped</p>
           <br/>
           <table border="1">
             <thead>
@@ -224,17 +304,16 @@ export const createOrder = async (req, res) => {
               </tr>
             </thead>
             <tbody>
-              ${orderItems?.map(
-                (orderItm) =>
-                  `<tr>
-                  <td>
-                    ${orderItm?.name} (${orderItm?.size})
-                  </td>
-                  <td>${orderItm?.discountedRetailPrice} TK</td>
-                  <td>${orderItm?.quantity}</td>
-                  <td>${orderItm?.totalPrice} TK</td>
-                </tr>`
-              )}
+             ${newOrderItems?.map(
+  (orderItm) =>
+    `<tr>
+      <td>${orderItm.name} (${orderItm.size})</td>
+      <td>${orderItm.discountedRetailPrice.toFixed(2)} TK</td>
+      <td>${orderItm.quantity}</td>
+      <td>${orderItm.totalPrice.toFixed(2)} TK</td>
+    </tr>`
+).join("")}
+
                 <tr>
                   <td></td>
                   <td></td>
@@ -244,18 +323,15 @@ export const createOrder = async (req, res) => {
                 <tr>
                   <td></td>
                   <td></td>
-                  <td><b>Delivery Charge: </b></td>
-                  <td>${deliveryChargeInside ?? 0} TK</td>
+                 
+                 
                 </tr>
                 <tr>
                   <td></td>
                   <td></td>
                   <td><b>Subtotal: </b></td>
-                  <td><b>${
-                    subtotal +
-                    deliveryChargeInside -
-                    (coupon?.discountAmount ?? 0)
-                  } TK</b></td>
+                  <td><b>${subtotal} TK</b></td>
+                 
                 </tr>
             </tbody>
           </table>
@@ -840,3 +916,50 @@ export const deleteOrder = async (req, res) => {
     return res.status(500).json(jsonResponse(false, error, null));
   }
 };
+
+
+// controllers/download/getDownloads.js
+export const getUserDownloads = async (req, res) => {
+  try {
+    const userId = req.query.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const downloads = await prisma.downloadUrl.findMany({
+      where: { userId },
+    });
+
+    const downloadsWithProduct = await Promise.all(
+      downloads.map(async (item) => {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true },
+        });
+
+        return {
+          ...item,
+          productName: product?.name ?? "Unknown Product",
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Downloads fetched successfully",
+      data: downloadsWithProduct,
+    });
+  } catch (error) {
+    console.error("Download fetch error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+

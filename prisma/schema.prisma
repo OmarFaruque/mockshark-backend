@@ -258,6 +258,7 @@ model Product {
     isFeatured       Boolean  @default(false)
     viewCount        Int?     @default(0)
     slug             String
+    downloadUrl      String?
     createdBy        String?
     updatedBy        String?
     deletedBy        String?
@@ -345,6 +346,19 @@ model Order {
     otp                    String?
     deliveryChargeInside   Float?
     deliveryChargeOutside  Float?
+
+    billingFirstName     String?
+    billingLastName      String?
+    billingCompany       String?
+    billingCountry       String?
+    billingEmail         String?
+    billingPhone         String?
+    address              String?
+    apartment            String?
+    city                  String?
+    state                String?
+    postalCode           String?
+
     isDeleted              Boolean      @default(false)
     createdBy              String?
     updatedBy              String?
@@ -595,6 +609,15 @@ model Withdraw {
   status         String   @default("Pending")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model DownloadUrl {
+    id           String    @id @default(uuid())
+    userId       String?
+    productId    String?
+    orderId      String?
+    downloadUrl  String?
+
 }
 
 

@@ -29,10 +29,12 @@ export const createProduct = async (req, res) => {
         longDescription,
         fileSize,
         resolution,
+        downloadUrl,
         sku,
         isTrending,
         isFeatured,
         isActive,
+
       } = req.body;
      console.log({ reqBody: req.body });
 
@@ -137,6 +139,7 @@ export const createProduct = async (req, res) => {
             longDescription: longDescription,
             resolution : resolution,
             fileSize: fileSize,
+            downloadUrl : downloadUrl,
             sku: sku,
             isTrending: isTrending === "true" ? true : false,
             isFeatured: isFeatured === "true" ? true : false,
@@ -190,6 +193,7 @@ export const createProduct = async (req, res) => {
                 longDescription: longDescription,
                 resolution: resolution,
                 fileSize: fileSize,
+                downloadUrl : downloadUrl,
                 isTrending: isTrending === "true" ? true : false,
                 isFeatured: isFeatured === "true" ? true : false,
                 isActive: isActive === "true" ? true : false,
@@ -246,6 +250,7 @@ export const createProduct = async (req, res) => {
                 sku: sku,
                 resolution: resolution,
                 fileSize: fileSize,
+                downloadUrl: downloadUrl,
                 name: name,
                 shortDescription: shortDescription,
                 longDescription: longDescription,

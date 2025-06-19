@@ -5,9 +5,13 @@ import {
   createOrderSsl,
   createOrderSuccess,
   deleteOrder,
+
   getOrder,
   getOrders,
   getOrdersByUser,
+ 
+  getUserDownloads,
+ 
   updateOrder,
 } from "../../controllers/order/order.js";
 // import {
@@ -21,7 +25,7 @@ import verify from "../../utils/verifyToken.js";
 
 const router = express.Router();
 
-router.post("/v1/orders", verify, createOrder);
+router.post("/v1/orders",  createOrder);
 router.post("/v1/orders-init", createOrderSsl);
 router.post("/v1/orders-success", createOrderSuccess);
 router.post("/v1/orders-fail", createOrderFail);
@@ -35,5 +39,7 @@ router.get("/v1/orders/:id", verify, getOrder);
 router.put("/v1/orders/:id", verify, updateOrder);
 // router.delete("/v1/orders/:id", orderRemove, verify, deleteOrder);
 router.delete("/v1/orders/:id", verify, deleteOrder);
+
+router.get("/v1/downloads", getUserDownloads  );
 
 export default router;
