@@ -104,6 +104,8 @@ model User {
     review     Review[]
     order      Order[]
     preorder   Preorder[]
+     licenseCertificates LicenseCertificate[]
+     downloadUrls DownloadUrl[]
 }
 
 model Banner {
@@ -280,6 +282,8 @@ model Product {
     wishlist          Wishlist[]
     review            Review[]
     preorder          Preorder[]
+     licenseCertificates LicenseCertificate[]
+     downloadUrls DownloadUrl[]
 }
 
 model ProductAttribute {
@@ -332,6 +336,7 @@ model Order {
     couponId               String?
     invoiceNumber          String?      @default(nanoid(6))
     customerName           String?
+    invoiceHtml            String?  @db.Text
     customerPhone          String?
     customerAddress        String?
     customerBillingAddress String?
@@ -368,6 +373,8 @@ model Order {
     coupon     Coupon?     @relation(fields: [couponId], references: [id], onDelete: Cascade)
     user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
     orderItems OrderItem[]
+    licenseCertificates LicenseCertificate[]
+    downloadUrls DownloadUrl[] 
 }
 
 model OrderItem {
@@ -612,12 +619,39 @@ model Withdraw {
 }
 
 model DownloadUrl {
-    id           String    @id @default(uuid())
-    userId       String?
-    productId    String?
-    orderId      String?
-    downloadUrl  String?
+  id           String   @id @default(uuid())
+  userId       String
+  productId    String
+  orderId      String
+  downloadUrl  String
+  licenseType  String?
+  licenseText  String?   @db.Text
+  createdAt    DateTime @default(now())
 
+  user         User?     @relation(fields: [userId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  product      Product?  @relation(fields: [productId], references: [id])
 }
+
+
+model LicenseCertificate {
+  id          String   @id @default(uuid())
+  userId      String?
+  orderId     String?
+  productId   String?
+  licenseType String
+  licenseText String   @db.Text
+  downloadUrl String?  // optional
+  createdAt   DateTime @default(now())
+
+  user       User?     @relation(fields: [userId], references: [id])
+  order      Order?    @relation(fields: [orderId], references: [id])
+  product    Product?  @relation(fields: [productId], references: [id])
+}
+
+
+
+
 
 

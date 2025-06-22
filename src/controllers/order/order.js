@@ -183,47 +183,216 @@ subtotalCost += itemCost;
         where: { id: couponId, isActive: true },
       });
 
+const invoiceHtml = `
+  <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
+    <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
+    
+    <p>Dear <strong>${billingFirstName} ${billingLastName}</strong>,</p>
+    <p>Your order has been placed successfully!</p>
+
+    <h3 style="margin-top: 30px; color: #192533;">Order Information:</h3>
+    <table style="width: 100%; margin-bottom: 20px;">
+      <tr><td><strong>Phone:</strong></td><td>${billingPhone}</td></tr>
+      <tr><td><strong>Shipping Address:</strong></td><td>${address}</td></tr>
+      <tr><td><strong>Billing Address:</strong></td><td>${address}</td></tr>
+      <tr><td><strong>City:</strong></td><td>${city}</td></tr>
+      <tr><td><strong>Postal Code:</strong></td><td>${postalCode}</td></tr>
+      <tr><td><strong>Total Items:</strong></td><td>${totalNumberOfItems}</td></tr>
+      <tr><td><strong>Order Status:</strong></td><td>Delivered</td></tr>
+    </table>
+
+    <h3 style="color: #192533;">Order Summary:</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #f0f0f0;">
+          <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Product</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Price</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Quantity</th>
+          <th style="border: 1px solid #ccc; padding: 8px;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${newOrderItems?.map(
+          (orderItm) => `
+            <tr>
+              <td style="border: 1px solid #ccc; padding: 8px;">${orderItm.name} (${orderItm.size})</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.discountedRetailPrice.toFixed(2)} $</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.quantity}</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalPrice.toFixed(2)} $</td>
+            </tr>
+          `
+        ).join("")}
+        <tr>
+          <td colspan="3" style="text-align: right; padding: 8px;"><strong>Coupon Discount:</strong></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${coupon?.discountAmount ?? 0} $</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="text-align: right; padding: 8px;"><strong>Subtotal:</strong></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotal.toFixed(2)} $</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top: 30px;">Thank you for shopping with us! 💚</p>
+  </div>
+`;
+
+
+
+
       //create order
-      let newOrder = await tx.order.create({
-        data: {
-         user: {
+  let newOrder = await tx.order.create({
+  data: {
+    user: {
       connect: { id: userId }
     },
-          couponId,
-          // customerName,
-          // customerPhone,
-          // customerAddress,
-          // customerEmail,
-          // customerBillingAddress,
-          // customerCity,
-          // customerPostalCode,
-          invoiceNumber,
-           billingFirstName,     
-    billingLastName,     
-    billingCompany,       
-    billingCountry,       
-    billingEmail,         
-    billingPhone ,        
-    address,              
-    apartment,            
-    city,                 
-    state,                
+    couponId,             // ensure this variable is defined or null
+    invoiceNumber,        // ensure this variable is defined or null
+    billingFirstName,
+    billingLastName,
+    billingCompany,
+    billingCountry,
+    billingEmail,
+    billingPhone,
+    address,
+    apartment,
+    city,
+    state,
     postalCode,
-          totalItems: totalNumberOfItems,
-          subtotalCost: subtotalCost,
-          subtotal:
-            subtotal,
-            // +
-            // (deliveryChargeInside ?? deliveryChargeOutside) -
-            // (coupon?.discountAmount ?? 0),
-          // paymentMethod,
-          // deliveryChargeInside: deliveryChargeInside ?? null,
-          // deliveryChargeOutside: deliveryChargeOutside ?? null,
-          orderItems: {
-            create: newOrderItems,
-          },
+    invoiceHtml,
+    totalItems: totalNumberOfItems,
+    subtotalCost: subtotalCost,
+    subtotal: subtotal,
+    orderItems: {
+      create: orderItems.map((item) => ({
+        name: item.name,
+        size: item.size,
+        costPrice: item.costPrice,
+        retailPrice: item.retailPrice,
+        discountedRetailPrice: item.discountedRetailPrice || item.retailPrice,
+        quantity: item.quantity,
+        totalCostPrice: item.costPrice * item.quantity,
+        totalPrice: item.retailPrice * item.quantity,
+        product: {
+          connect: { id: item.productId }
         },
-      });
+        productAttribute: {
+          connect: { id: item.productAttributeId }
+        }
+      })),
+    }
+  },
+});
+
+// =====================
+// License certificate ar download url create korar code ekhane add korbe
+// =====================
+
+const licenseTexts = {
+  "Personal Use License": (buyerName, orderNumber, date, productTitle) => `
+MockShark License Certificate
+
+License Type: Personal Use License
+Buyer Name: ${buyerName}
+Order Number: ${orderNumber}
+Download Date: ${date}
+Product: ${productTitle}
+
+Usage Rights:
+✓ Personal projects (non-commercial)
+✓ Portfolio or educational use
+✘ Cannot be used in client work
+✘ Cannot be resold or redistributed
+✘ No use in paid advertising, branding, or merchandising
+
+Issued by: MockShark.com
+Support: support@mockshark.com
+`,
+
+  "Commercial License": (buyerName, orderNumber, date, productTitle) => `
+MockShark License Certificate
+
+License Type: Commercial License
+Buyer Name: ${buyerName}
+Order Number: ${orderNumber}
+Download Date: ${date}
+Product: ${productTitle}
+
+Usage Rights:
+✓ Client work, branding, websites, social media ads
+✓ Unlimited commercial projects
+✘ Cannot resell or redistribute the mockup file
+✘ Cannot include in products where mockup is the main value
+
+Issued by: MockShark.com
+Support: support@mockshark.com
+`,
+
+  "Extended Commercial License": (buyerName, orderNumber, date, productTitle) => `
+MockShark License Certificate
+
+License Type: Extended Commercial License
+Buyer Name: ${buyerName}
+Order Number: ${orderNumber}
+Download Date: ${date}
+Product: ${productTitle}
+
+Usage Rights:
+✓ All commercial rights included
+✓ Print-on-demand & resale allowed
+✓ Can be used in end-products for sale
+✘ Cannot redistribute or resell the raw mockup file
+
+Issued by: MockShark.com
+Support: support@mockshark.com
+`,
+
+  // Extra aliases (frontend jodi Commercial/Extended Commercial dei)
+  "Commercial": (...args) => licenseTexts["Commercial License"](...args),
+  "Extended Commercial": (...args) => licenseTexts["Extended Commercial License"](...args),
+};
+
+
+// newOrderItems er moddhe jodi licenseType thake taile seta nibe, na hole default "Personal Use License" dhore nibe
+for (const item of newOrderItems) {
+  const licenseType = item.licenseType || "Personal Use License";
+const templateFn = licenseTexts[licenseType] || licenseTexts["Personal Use License"];
+const licenseText = templateFn(
+  billingFirstName + " " + billingLastName,
+ newOrder.invoiceNumber,
+  new Date().toLocaleDateString(),
+  item.name
+);
+
+  // LicenseCertificate record create koro
+  await tx.licenseCertificate.create({
+    data: {
+      userId,
+      orderId: newOrder.id,
+      productId: item.productId,
+      licenseType,
+      licenseText,
+    },
+  });
+
+  // jodi product er downloadUrl thake, downloadUrl create korbe
+  const product = await tx.product.findUnique({
+    where: { id: item.productId }
+  });
+
+  if (product?.downloadUrl) {
+    await tx.downloadUrl.create({
+      data: {
+        userId,
+        productId: item.productId,
+        orderId: newOrder.id,
+        downloadUrl: product.downloadUrl,
+      },
+    });
+  }
+}
+
+
 
       if (!newOrder) {
         return res
@@ -292,7 +461,7 @@ for (let i = 0; i < newOrderItems.length; i++) {
           <p><b>Postal Code:</b> ${postalCode}</p>
           
           <p><b>Total Items:</b> ${totalNumberOfItems}</p>
-          <p><b>Order Status:</b> Shipped</p>
+          <p><b>Order Status:</b> Delivered</p>
           <br/>
           <table border="1">
             <thead>
@@ -308,9 +477,9 @@ for (let i = 0; i < newOrderItems.length; i++) {
   (orderItm) =>
     `<tr>
       <td>${orderItm.name} (${orderItm.size})</td>
-      <td>${orderItm.discountedRetailPrice.toFixed(2)} TK</td>
+      <td>${orderItm.discountedRetailPrice.toFixed(2)} $</td>
       <td>${orderItm.quantity}</td>
-      <td>${orderItm.totalPrice.toFixed(2)} TK</td>
+      <td>${orderItm.totalPrice.toFixed(2)} $</td>
     </tr>`
 ).join("")}
 
@@ -318,7 +487,7 @@ for (let i = 0; i < newOrderItems.length; i++) {
                   <td></td>
                   <td></td>
                   <td><b>Coupon Discount: </b></td>
-                  <td>${coupon?.discountAmount ?? 0} TK</td>
+                  <td>${coupon?.discountAmount ?? 0} $</td>
                 </tr>
                 <tr>
                   <td></td>
@@ -330,7 +499,7 @@ for (let i = 0; i < newOrderItems.length; i++) {
                   <td></td>
                   <td></td>
                   <td><b>Subtotal: </b></td>
-                  <td><b>${subtotal} TK</b></td>
+                  <td><b>${subtotal} $</b></td>
                  
                 </tr>
             </tbody>
@@ -846,28 +1015,28 @@ export const updateOrder = async (req, res) => {
                   <td>
                     ${orderItm?.name} (${orderItm?.size})
                   </td>
-                  <td>${orderItm?.discountedRetailPrice} TK</td>
+                  <td>${orderItm?.discountedRetailPrice} $</td>
                   <td>${orderItm?.quantity}</td>
-                  <td>${orderItm?.totalPrice} TK</td>
+                  <td>${orderItm?.totalPrice} $</td>
                 </tr>`
               )}
                 <tr>
                   <td></td>
                   <td></td>
                   <td><b>Coupon Discount: </b></td>
-                  <td>${coupon?.discountAmount ?? 0} TK</td>
+                  <td>${coupon?.discountAmount ?? 0} $</td>
                 </tr>
                 <tr>
                   <td></td>
                   <td></td>
                   <td><b>Delivery Charge: </b></td>
-                  <td>${order?.deliveryChargeInside ?? 0} TK</td>
+                  <td>${order?.deliveryChargeInside ?? 0} $</td>
                 </tr>
                 <tr>
                   <td></td>
                   <td></td>
                   <td><b>Subtotal: </b></td>
-                  <td><b>${order?.subtotal} TK</b></td>
+                  <td><b>${order?.subtotal} $</b></td>
                 </tr>
             </tbody>
           </table>
@@ -963,3 +1132,46 @@ export const getUserDownloads = async (req, res) => {
   }
 };
 
+export const getUserLicenses = async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing userId in query.",
+    });
+  }
+
+  try {
+    const licenses = await prisma.licenseCertificate.findMany({
+      where: { userId },
+      include: {
+        product: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const formatted = licenses.map((item) => ({
+      productName: item.product?.name || "Unknown Product",
+      licenseType: item.licenseType,
+      licenseText: item.licenseText,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error("License fetch error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong.",
+    });
+  }
+};

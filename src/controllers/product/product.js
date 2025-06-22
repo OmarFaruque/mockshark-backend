@@ -1410,6 +1410,7 @@ export const getProductForCustomer = async (req, res) => {
         images: { select: { image: true } },
         productAttributes: {
           select: {
+            id:true,
             size: true,
             costPrice: true,
             retailPrice: true,
