@@ -6,7 +6,8 @@ import sendEmail from "../../utils/emailService.js";
 import jsonResponse from "../../utils/jsonResponse.js";
 import prisma from "../../utils/prismaClient.js";
 import validateInput from "../../utils/validateInput.js";
-
+import axios from 'axios';
+ // adjust based on your structure
 // dotenv.config();
 
 const module_name = "order";
@@ -284,9 +285,53 @@ const invoiceHtml = `
   },
 });
 
+//bundle order er jonno license certificate create korar code ekhane add korbe
+// const user = await tx.user.findUnique({
+//   where: { id: userId },
+//   select: {
+//     credits: true,
+//     creditsUsed: true,
+//   },
+// });
+
+// if (!user || (user.credits ?? 0) <= (user.creditsUsed ?? 0)) {
+//   return res.status(400).json({ error: "No available credits" });
+// }
+
+// // Update creditsUsed
+// await tx.user.update({
+//   where: { id: userId },
+//   data: {
+//     creditsUsed: { increment: 1 },
+//     credits: { decrement: 1 }, // Decrement credits by 1
+//   },
+// });
+
+
 // =====================
 // License certificate ar download url create korar code ekhane add korbe
 // =====================
+
+// Filter bundle orders (e.g., productId like "bundle-10")
+// const bundleItems = newOrderItems.filter(item =>
+//   item.productId.startsWith("bundle-")
+// );
+
+// // Add credits for each bundle
+// for (const bundle of bundleItems) {
+//   const creditsToAdd = parseInt(bundle.licenseType); // "10" from "10 Mockups"
+//   if (!isNaN(creditsToAdd)) {
+//     await tx.user.update({
+//       where: { id: userId },
+//       data: {
+//         credits: { increment: creditsToAdd }
+//       }
+//     });
+//   }
+// }
+
+
+
 
 const licenseTexts = {
   "Personal Use License": (buyerName, orderNumber, date, productTitle) => `
@@ -375,7 +420,7 @@ const licenseText = templateFn(
     },
   });
 
-  // jodi product er downloadUrl thake, downloadUrl create korbe
+ 
   const product = await tx.product.findUnique({
     where: { id: item.productId }
   });
@@ -707,7 +752,7 @@ export const getOrdersSsl = async (req, res) => {
 
 //get all orders
 export const getOrders = async (req, res) => {
-  if (req.user.roleName !== "super-admin") {
+  if (req.user?.roleName !== "super-admin") {
     getOrdersByUser(req, res);
   } else {
     try {
@@ -1175,3 +1220,552 @@ export const getUserLicenses = async (req, res) => {
     });
   }
 };
+
+
+// POST a new bundle
+export const createBundle = async (req, res) => {
+  try {
+    const { title, price, regularPrice, discountPrice, mockups } = req.body;
+
+    if (!title || !price || !regularPrice  || !mockups) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required',
+      });
+    }
+
+    const newBundle = await prisma.bundle.create({
+      data: {
+        title,
+        price: parseFloat(price),
+        regularPrice: parseFloat(regularPrice),
+        discountPrice: parseFloat(discountPrice),
+        mockups: parseInt(mockups),
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Bundle created successfully',
+      data: newBundle,
+    });
+  } catch (error) {
+    console.error('POST /v1/bundles error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create bundle',
+      error: error.message,
+    });
+  }
+};
+
+export const getBundles = async (req, res) => {
+  try {
+    const bundles = await prisma.bundle.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Bundles fetched successfully',
+      data: bundles,
+    });
+  } catch (error) {
+    console.error('GET /v1/bundles error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch bundles',
+      error: error.message,
+    });
+  }
+};
+export const deleteBundle = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await prisma.bundle.delete({
+      where: { id },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Bundle deleted successfully',
+      data: deleted,
+    });
+  } catch (error) {
+    console.error('DELETE /v1/bundle/:id error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete bundle',
+      error: error.message,
+    });
+  }
+};
+
+
+export const downloadWithCredit = async (req, res) => {
+  const { userId, productId } = req.query;
+
+  if (!userId || !productId) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID and Product ID are required",
+    });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+
+  if (!user || !product) {
+    return res.status(404).json({ success: false, message: "User or Product not found" });
+  }
+
+  const hasDownloaded = await prisma.downloadUrl.findFirst({
+    where: { userId, productId },
+  });
+
+  if (hasDownloaded) {
+    return res.status(200).json({
+      success: true,
+      message: "Already Purchased",
+      downloadUrl: hasDownloaded.downloadUrl,
+    });
+  }
+
+  const remaining = user.credits - user.creditsUsed;
+  if (remaining <= 0) {
+    return res.status(403).json({
+      success: false,
+      message: "No credits left",
+    });
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { creditsUsed: { increment: 1 } },
+  });
+ await prisma.licenseCertificate.create({
+  data: {
+    userId,
+
+    productId ,  // ❌ Missing comma here!
+    licenseType: 'commercial',
+    licenseText: `Usage Rights:
+✓ Client work, branding, websites, social media ads
+✓ Unlimited commercial projects
+✘ Cannot resell or redistribute the mockup file
+✘ Cannot include in products where mockup is the main value
+
+Issued by: MockShark.com
+Support: support@mockshark.com`
+  },
+});
+  await prisma.downloadUrl.create({
+    data: {
+      userId,
+      productId,
+      downloadUrl: product.downloadUrl,
+      
+    },
+  });
+ 
+
+
+  return res.status(200).json({
+    success: true,
+    message: "Product Purchased",
+    downloadUrl: product.downloadUrl,
+  });
+};
+
+
+export const createBundleOrder = async (req, res) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const {
+        userId,
+        invoiceNumber,
+        billingFirstName,
+        billingLastName,
+        billingEmail,
+        billingPhone,
+        address,
+        city,
+        postalCode,
+        bundleId,
+        credits,
+        price,
+      } = req.body;
+
+      if (!bundleId || !credits || !price) {
+        return res.status(400).json(jsonResponse(false, "Missing bundle info", null));
+      }
+const invoiceHtml = `
+  <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
+    <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
+    <p>Dear <strong>${billingFirstName} ${billingLastName}</strong>,</p>
+    <p>Your bundle order has been placed successfully!</p>
+
+    <h3 style="margin-top: 30px; color: #192533;">Order Info:</h3>
+    <table style="width: 100%; margin-bottom: 20px;">
+      <tr><td><strong>Phone:</strong></td><td>${billingPhone}</td></tr>
+      <tr><td><strong>Address:</strong></td><td>${address}, ${city}, ${postalCode}</td></tr>
+      <tr><td><strong>Credits:</strong></td><td>${credits}</td></tr>
+      <tr><td><strong>Total:</strong></td><td>$${price}</td></tr>
+    </table>
+
+    <p style="margin-top: 30px;">Thanks for shopping with MockShark 💚</p>
+  </div>
+`;
+
+      // Create the bundle order first
+      const newBundleOrder = await tx.bundleOrder.create({
+        data: {
+          userId,
+          invoiceNumber,
+          billingFirstName,
+          billingLastName,
+          billingEmail,
+          billingPhone,
+          address,
+          city,
+          invoiceHtml: invoiceHtml,
+          postalCode,
+          totalItems: 1,
+          subtotal: price,
+          orderItems: {
+            create: [
+              {
+                name: `${credits} Mockups Bundle`,
+                quantity: 1,
+                size: `${credits} Credits`,
+                totalPrice: price,
+                retailPrice: price,
+                costPrice: price,
+                discountedRetailPrice: price,
+                totalCostPrice: price,
+              },
+            ],
+          },
+          licenseCertificates: {
+            create: [
+              {
+                userId,
+                licenseType: "Commercial License",
+                licenseText: `You purchased ${credits} credits with bundle #${bundleId}`,
+              },
+            ],
+          },
+        },
+        include: { orderItems: true }, // We need this to render the invoice
+      });
+
+      // Update user credits
+      await tx.user.update({
+        where: { id: userId },
+        data: { credits: { increment: credits } },
+      });
+
+      // Generate invoice HTML
+    
+
+      return res.status(200).json(jsonResponse(true, "Bundle order placed", {
+        ...newBundleOrder,
+        invoiceHtml,
+      }));
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(jsonResponse(false, error.message, null));
+  }
+};
+
+
+
+
+
+
+// export const createBundleOrder = async (req, res) => {
+//   const {
+//     userId,
+//     name,
+//     price,
+//     credits,
+//     quantity,
+//     variant,
+//     isBundle,
+//   } = req.body;
+
+//   if (!userId || !name || !price || !credits || !quantity || !variant) {
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   try {
+//     const bundleOrder = await prisma.bundleOrder.create({
+//       data: {
+//         user: { connect: { id: userId } },
+//         name,
+//         price: parseFloat(price),
+//         credits: parseInt(credits),
+//         usedCredits: 0, // ensure tracking starts at 0
+//         quantity: parseInt(quantity),
+//         variant,
+//         isBundle: isBundle ?? true, // default to true if not passed
+//       },
+//     });
+
+//     res.status(201).json({
+//       status: "success",
+//       data: bundleOrder,
+//     });
+//   } catch (error) {
+//     console.error("❌ Bundle order creation error:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+// controllers/bundleOrderController.js
+export const getBundleOrdersByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const orders = await prisma.bundleOrder.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching bundle orders:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch bundle orders",
+    });
+  }
+};
+
+
+;
+export const getSingleBundleOrder = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id || req.userId;
+
+  try {
+    const order = await prisma.bundleOrder.findFirst({
+      where: {
+        id,
+        userId,
+      },
+      include: {
+        orderItems: true,
+        licenseCertificates: true,
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Bundle order not found or access denied",
+      });
+    }
+
+    console.log("✅ Found bundle order:", order);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order fetched successfully",
+      data: {
+        id: order.id,
+        invoiceNumber: order.invoiceNumber || order.id.slice(0, 8).toUpperCase(),
+        date: order.createdAt,
+        total: order.subtotal,
+        invoiceHtml: order.invoiceHtml || null, // ✅ this line must not be missing
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching bundle order:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
+
+
+
+// ✅ Paddle Checkout V2 Integration
+
+
+export const createOrderPaddle = async (req, res) => {
+  const {
+    userId,
+    couponId,
+    customerName,
+    customerPhone,
+    customerAddress,
+    customerBillingAddress,
+    customerEmail,
+    customerCity,
+    customerPostalCode,
+    invoiceNumber,
+    deliveryChargeInside,
+    paymentMethod,
+    orderItems,
+  } = req.body;
+
+  console.log("Received order payload:", req.body);
+
+  let totalNumberOfItems = 0;
+  let subtotal = 0;
+  let subtotalCost = 0;
+  let newOrderItems = [];
+  let allProductNames = "";
+
+  if (orderItems && orderItems.length > 0) {
+    for (let item of orderItems) {
+      const product = await prisma.product.findFirst({
+        where: { id: item.productId, isDeleted: false, isActive: true },
+      });
+
+      const attribute = await prisma.productAttribute.findFirst({
+        where: { id: item.productAttributeId, isDeleted: false },
+      });
+
+      if (!product || !attribute) {
+        console.log("❌ Invalid product or attribute");
+        return res.status(404).json({ success: false, message: "Invalid product" });
+      }
+
+      const totalPrice = item.quantity * attribute.discountedRetailPrice;
+      const totalCostPrice = item.quantity * attribute.costPrice;
+
+      subtotal += totalPrice;
+      subtotalCost += totalCostPrice;
+      totalNumberOfItems += item.quantity;
+
+      newOrderItems.push({
+        ...item,
+        name: product.name,
+        size: attribute.size,
+        totalPrice,
+        totalCostPrice,
+      });
+
+      allProductNames += `, ${product.name}`;
+    }
+  } else {
+    console.log("❌ No items provided in order");
+    return res.status(400).json({ success: false, message: "No items in order" });
+  }
+
+  let coupon = null;
+  if (couponId) {
+    coupon = await prisma.coupon.findFirst({ where: { id: couponId, isActive: true } });
+    if (coupon) {
+      console.log("✅ Coupon applied:", coupon.code, "-", coupon.discountAmount);
+    }
+  }
+
+  const totalAmount = subtotal + (deliveryChargeInside || 0) - (coupon?.discountAmount || 0);
+
+  // ✅ Paddle V2 API
+  const API_KEY = process.env.PADDLE_API_KEY; // apikey_xxxxx
+  const PADDLE_API_URL = 'https://api.paddle.com/checkout/sessions';
+
+  try {
+    const paddleRes = await axios.post(
+      PADDLE_API_URL,
+      {
+        customer: {
+          email: customerEmail,
+        },
+        items: orderItems.map((item) => ({
+          price_id: "pri_01jwvht6kpem6y9vjz0qerpvbv", // This must be created in Paddle dashboard manually
+          quantity: item.quantity || 1,
+        })),
+        custom_data: {
+          userId,
+          invoiceNumber,
+        },
+        success_url: `http://localhost:3000/success`,
+        cancel_url: `http://localhost:3000/cancel`,
+
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const checkoutUrl = paddleRes.data?.data?.url;
+    console.log("✅ Paddle Checkout URL:", checkoutUrl);
+
+    if (!checkoutUrl) {
+      console.log("❌ Paddle response missing checkout URL");
+      return res.status(400).json({
+        success: false,
+        message: "Failed to generate Paddle checkout link",
+        error: paddleRes.data,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      gateway: checkoutUrl,
+    });
+  } catch (error) {
+    console.error("❌ Paddle error:", error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Paddle checkout failed",
+      error: error.response?.data || error.message,
+    });
+  }
+};
+
+
+
+export const handlePaddleWebhook = async (req, res) => {
+  try {
+    const event = req.body;
+    console.log("✅ Paddle Webhook Event:", event);
+
+    const eventType = event.event_type; // like "payment_succeeded", "checkout_completed"
+    const customData = event.data?.custom_data || {};
+
+    const userId = customData.userId;
+    const invoiceNumber = customData.invoiceNumber;
+
+    if (eventType === 'payment_succeeded') {
+      // ✅ Update order status in DB
+      await prisma.order.updateMany({
+        where: {
+          userId,
+          invoiceNumber,
+          status: 'pending',
+        },
+        data: {
+          status: 'paid',
+          paymentReference: event.data.id,
+        },
+      });
+
+      console.log("✅ Order marked as paid for:", invoiceNumber);
+    }
+
+    res.status(200).send('Webhook received');
+  } catch (err) {
+    console.error("❌ Paddle Webhook Error:", err);
+    res.status(500).send('Webhook processing failed');
+  }
+};
+
+

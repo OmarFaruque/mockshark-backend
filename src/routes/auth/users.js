@@ -17,19 +17,19 @@ import {
   usersUserList,
 } from "../../utils/modules.js";
 import verify from "../../utils/verifyToken.js";
-import { createBrokerUser, createDeposit, createWithdraw, deleteOrder, getBrokerUserById, getbrokerUsers, getDeposits, getExecutedOrders, getWithdraws, loginBrokerUser, placeOrder, updateBrokerUser, updateBrokerUserFunds, updateDepositStatus, updateWithdrawStatus } from "../../controllers/auth/auth.js";
+import { createBrokerUser, createDeposit, createWithdraw, deleteOrder, forgotPassword, getBrokerUserById, getbrokerUsers, getDeposits, getExecutedOrders, getWithdraws, loginBrokerUser, placeOrder, resetPassword, sendResetPasswordLink, updateBrokerUser, updateBrokerUserFunds, updateDepositStatus, updateWithdrawStatus } from "../../controllers/auth/auth.js";
 
 
 const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-router.get("/v1/auth/users", usersList, verify, getUsers);
-router.get("/v1/auth/user/users", usersUserList, verify, getUsersByUser);
-router.get("/v1/auth/users/:id", usersSingle, verify, getUser);
-router.put("/v1/auth/users/:id", usersEdit, verify, updateUser);
-router.put("/v1/users/:id/ban", usersBan, verify, banUser);
-router.delete("/v1/auth/users/:id", usersRemove, verify, deleteUser);
+router.get("/v1/auth/users",   getUsers);
+router.get("/v1/auth/user/users",   getUsersByUser);
+router.get("/v1/auth/users/:id",   getUser);
+router.put("/v1/auth/users/:id",   updateUser);
+router.put("/v1/users/:id/ban",  banUser);
+router.delete("/v1/auth/users/:id",   deleteUser);
 
 
 //For customer
@@ -67,4 +67,6 @@ router.put("/v1/update-deposites/:id/status", updateDepositStatus);
 router.put("/v1/update-withdraws/:id/status", updateWithdrawStatus);
 
 
+router.post('/v1/forgot-password', sendResetPasswordLink);
+router.put('/v1/reset-password', resetPassword);
 export default router;

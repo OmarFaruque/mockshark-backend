@@ -1,18 +1,36 @@
 import express from "express";
 import {
+  createBundle,
+  createBundleOrder,
   createOrder,
   createOrderFail,
+  createOrderPaddle,
   createOrderSsl,
   createOrderSuccess,
+  deleteBundle,
   deleteOrder,
+
+  downloadWithCredit,
+
+  getBundleOrdersByUser,
+
+  getBundles,
 
   getOrder,
   getOrders,
   getOrdersByUser,
  
+ 
+ 
+  getSingleBundleOrder,
+ 
+ 
+ 
   getUserDownloads,
  
   getUserLicenses,
+ 
+  handlePaddleWebhook,
  
   updateOrder,
 } from "../../controllers/order/order.js";
@@ -44,5 +62,18 @@ router.delete("/v1/orders/:id", verify, deleteOrder);
 
 router.get("/v1/downloads", getUserDownloads  );
 router.get("/v1/licenses" , getUserLicenses)
+
+router.post("/v1/bundle", createBundle)
+router.get('/v1/bundles', getBundles  )
+router.delete('/v1/bundle/:id', deleteBundle); 
+
+router.get("/v1/download-with-credit", downloadWithCredit);
+
+router.post("/v1/bundles/order", createBundleOrder)
+router.get("/v1/bundle-orders/:id", getBundleOrdersByUser);
+router.get("/v1/bundle-invoice-orders/:id", getSingleBundleOrder);
+router.post('/v1/orders-paddle', createOrderPaddle);
+
+router.post('/v1/paddle/webhook', express.urlencoded({ extended: true }), handlePaddleWebhook);
 
 export default router;

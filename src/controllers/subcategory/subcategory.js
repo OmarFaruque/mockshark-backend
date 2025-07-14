@@ -602,19 +602,16 @@ export const getSubcategoriesForCustomer = async (req, res) => {
           },
         ],
       },
-      //   include: {
-      //     serviceItem: true,
-      //     serviceManufacturer: true,
-      //     serviceModel: true,
-      //   },
-      //   select: {
-      //     user: { select: { name: true, image: true } },
-      //     id: true,
-      //     name: true,
-      //     image: true,
-      //     slug: true,
-      //     createdAt: true,
-      //   },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        slug: true,
+        createdAt: true,
+        category: true,           // if related category is needed
+        subsubcategory: true,     // if this relation exists
+        product: true,           // all products under this subcategory
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -627,31 +624,25 @@ export const getSubcategoriesForCustomer = async (req, res) => {
         : parseInt(defaultLimit()),
     });
 
-    if (subcategories.length === 0)
+    if (subcategories.length === 0) {
       return res
         .status(200)
         .json(jsonResponse(true, "No subcategory is available", null));
-
-    if (subcategories) {
-      return res
-        .status(200)
-        .json(
-          jsonResponse(
-            true,
-            `${subcategories.length} subcategories found`,
-            subcategories
-          )
-        );
-    } else {
-      return res
-        .status(404)
-        .json(jsonResponse(false, "Something went wrong. Try again", null));
     }
+
+    return res.status(200).json(
+      jsonResponse(
+        true,
+        `${subcategories.length} subcategories found`,
+        subcategories
+      )
+    );
   } catch (error) {
     console.log(error);
-    return res.status(500).json(jsonResponse(false, error, null));
+    return res.status(500).json(jsonResponse(false, error.message, null));
   }
 };
+
 
 //get single subcategory for customer
 export const getSubcategoryForCustomer = async (req, res) => {
@@ -688,5 +679,48 @@ export const getSubcategoryForCustomer = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(jsonResponse(false, error, null));
+  }
+};
+
+
+export const getProductsBySubcategorySlug = async (req, res) => {
+  try {
+    const { name } = req.params;
+
+    if (!name) {
+      return res
+        .status(400)
+        .json(jsonResponse(false, "Subcategory name is required", null));
+    }
+
+   const subcategory = await prisma.subcategory.findUnique({
+  where: { name }, // ✅ name is unique, so this is valid
+  include: {
+    product: {
+      include: {
+        images: true,              // ✅ Include related images
+        productAttributes: true,   // ✅ Include related product attributes
+      },
+    },
+  },
+});
+
+
+    if (!subcategory) {
+      return res
+        .status(404)
+        .json(jsonResponse(false, "Subcategory not found", null));
+    }
+
+    return res.status(200).json(
+      jsonResponse(
+        true,
+        `${subcategory.product.length} products found`,
+        subcategory.product
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(jsonResponse(false, err.message, null));
   }
 };

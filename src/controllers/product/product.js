@@ -50,11 +50,11 @@ export const createProduct = async (req, res) => {
 
       //check image limit
       if (req.files) {
-        if (req.files.length > 3) {
+        if (req.files.length > 5) {
           return res
             .status(404)
             .json(
-              jsonResponse(false, "You cannot add more than 3 images", null)
+              jsonResponse(false, "You cannot add more than 5 images", null)
             );
         }
       }
@@ -382,7 +382,7 @@ export const sendProductEmail = async (req, res) => {
 
 //get all products
 export const getProducts = async (req, res) => {
-  if (req.user.roleName !== "super-admin") {
+  if (req.user?.roleName !== "super-admin") {
     getProductsByUser(req, res);
   } else {
     try {
@@ -462,7 +462,7 @@ export const getProductsByUser = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
       where: {
-        userId: req.user.parentId ? req.user.parentId : req.user.id,
+        userId: req.user?.parentId ? req.user?.parentId : req.user?.id,
         isDeleted: false,
         AND: [
           {

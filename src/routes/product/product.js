@@ -47,13 +47,13 @@ router.post(
   createProduct
 );
 router.get("/v1/products-email/:id", verify, sendProductEmail);
-router.get("/v1/products",  verify, getProducts);
+router.get("/v1/products",   getProducts);
 router.get("/v1/user/products/", productUserList, verify, getProductsByUser);
 router.get("/v1/products/:slug", productSingle, verify, getProduct);
 
 router.put(
   "/v1/products/:id",
-  productEdit,
+
   verify,
   upload.array("images"),
   updateProduct
@@ -62,7 +62,7 @@ router.put(
 router.put("/v1/products/attributes/:id", verify, updateProductAttribute);
 router.put(
   "/v1/products/images/:id",
-  productEdit,
+  
   verify,
   upload.single("image"),
   updateProductImage
@@ -72,11 +72,11 @@ router.put("/v1/products/:id/viewCount", increaseProductViewCount);
 router.put("/v1/products/:id/ban", productBan, verify, banProduct);
 router.delete(
   "/v1/products/images/:id",
-  productRemove,
+ 
   verify,
   deleteProductImage
 );
-router.delete("/v1/products/:id", productRemove, verify, deleteProduct);
+router.delete("/v1/products/:id", verify, deleteProduct);
 
 //attributes
 router.post("/v1/products-attributes", verify, createProductAttribute);

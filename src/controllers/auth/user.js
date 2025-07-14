@@ -8,7 +8,7 @@ const module_name = "user";
 
 //get all users
 export const getUsers = async (req, res) => {
-  if (req.user.roleName !== "super-admin") {
+  if (req.user?.roleName !== "super-admin") {
     getUsersByUser(req, res);
   } else {
     try {
@@ -93,7 +93,7 @@ export const getUsersByUser = async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        parentId: req.user.id,
+        parentId: req.user?.id,
         isDeleted: false,
         AND: [
           {

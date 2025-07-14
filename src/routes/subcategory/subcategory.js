@@ -3,6 +3,7 @@ import multer from "multer";
 import {
   createSubcategory,
   deleteSubcategory,
+  getProductsBySubcategorySlug,
   getSubcategories,
   getSubcategoriesByCategory,
   getSubcategoriesForCustomer,
@@ -41,5 +42,9 @@ router.delete("/v1/subcategories/:id", verify, deleteSubcategory);
 //For customer
 router.get("/v1/customer/subcategories", getSubcategoriesForCustomer);
 router.get("/v1/customer/subcategories/:id", getSubcategoryForCustomer);
+router.get(
+  "/v1/customer/subcategory/:name/products",
+  getProductsBySubcategorySlug
+);
 
 export default router;

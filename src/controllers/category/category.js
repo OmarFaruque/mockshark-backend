@@ -505,6 +505,7 @@ export const getCategoriesForCustomer = async (req, res) => {
         createdAt: true,
         subcategory: true,
         subsubcategory: true,
+        products :true,
       },
       orderBy: {
         createdAt: "desc",

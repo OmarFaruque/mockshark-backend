@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.10.1",
+    "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.36.4",
     "cookie-parser": "^1.4.6",
@@ -20,7 +21,8 @@
     "nodemon": "^2.0.22",
     "prisma": "^6.10.1",
     "sharp": "^0.32.1",
-    "sslcommerz-lts": "^1.1.0"
+    "sslcommerz-lts": "^1.1.0",
+    "uuid": "^11.1.0"
   },
   "description": "Backend apis",
   "scripts": {

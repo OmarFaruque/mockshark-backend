@@ -5,6 +5,7 @@ import jwtSign from '../../utils/jwtSign.js'
 import prisma from '../../utils/prismaClient.js'
 import validateInput from '../../utils/validateInput.js'
 import uploadToCLoudinary from '../../utils/uploadToCloudinary.js'
+import { v4 as uuidv4 } from 'uuid';
 
 const module_name = 'auth'
 
@@ -1273,6 +1274,82 @@ export const verifyEmail = async (req, res) => {
 };
 
 
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
 
+    
+    const user = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+   
+    await prisma.user.updateMany({
+      where: { email }, 
+      data: {
+        password: newPassword, 
+      },
+    });
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const sendResetPasswordLink = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await prisma.user.findFirst({ where: { email } }); // ✅ use findFirst
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const token = uuidv4();
+  const expires = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+
+  await prisma.passwordResetToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt: expires,
+    },
+  });
+
+  const link = `http://localhost:3000/reset-password?token=${token}`;
+
+  await sendEmail(
+    email,
+    'Reset Your Password',
+    `<p>Click the link to reset your password: <a href="${link}">${link}</a></p>`
+  );
+
+  res.json({ message: 'Reset link sent to your email' });
+};
+
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { token },
+  });
+
+  if (!resetToken || resetToken.expiresAt < new Date()) {
+    return res.status(400).json({ message: 'Invalid or expired token' });
+  }
+
+  await prisma.user.update({
+    where: { id: resetToken.userId },
+    data: { password: newPassword },
+  });
+
+  await prisma.passwordResetToken.delete({ where: { token } });
+
+  res.json({ message: 'Password reset successful' });
+};
 
 
