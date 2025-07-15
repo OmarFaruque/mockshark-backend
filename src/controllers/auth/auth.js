@@ -14,7 +14,33 @@ const module_name = 'auth'
 
 export const register = async (req, res) => {
   try {
-    return await prisma.$transaction(async tx => {
+    const {
+      roleId,
+      parentId,
+      name,
+      fullname,
+      email,
+      password,
+      phone,
+      address,
+      billingAddress,
+      country,
+      city,
+      postalCode,
+      image,
+      otp,
+      otpCount,
+      initialPaymentAmount,
+      initialPaymentDue,
+      installmentTime
+    } = req.body;
+
+    const inputValidation = validateInput([name, email], ['Name', 'Email']);
+    if (inputValidation) {
+      return res.status(400).json(jsonResponse(false, inputValidation, null));
+    }
+
+    const result = await prisma.$transaction(async tx => {
       // Check if user already exists
       const user = await tx.user.findFirst({
         where: {
@@ -24,41 +50,9 @@ export const register = async (req, res) => {
       });
 
       if (user) {
-        return res.status(409).json(jsonResponse(false, 'User already exists', null));
+        throw new Error('User already exists');
       }
 
-      const {
-        roleId,
-        parentId,
-        name,
-        fullname,
-        email,
-        password,
-        phone,
-        address,
-        billingAddress,
-        country,
-        city,
-        postalCode,
-        image,
-        otp,
-        otpCount,
-        initialPaymentAmount,
-        initialPaymentDue,
-        installmentTime
-      } = req.body;
-
-      // Input validation
-      const inputValidation = validateInput(
-        [name, email],
-        ['Name', 'Email']
-      );
-
-      if (inputValidation) {
-        return res.status(400).json(jsonResponse(false, inputValidation, null));
-      }
-
-      // Create new user
       const createUser = await tx.user.create({
         data: {
           roleId,
@@ -80,34 +74,42 @@ export const register = async (req, res) => {
           initialPaymentDue,
           installmentTime,
           createdBy: req?.user?.id,
-          isActive: false 
+          isActive: false
         }
       });
 
-      // Construct verification link
-     const verifyLink = `https://mockshark.vercel.app/verify-email?id=${createUser.id}`;
-
-
-      // Send verification email
-      await sendEmail(
-        email,
-        'Verify Your Email - Mockshark',
-        `<p>Hi ${name},</p>
-        <p>Thanks for registering with Mockshark.</p>
-        <p>Please click the link below to verify your email address:</p>
-        <a href="${verifyLink}" target="_blank">Verify Email</a>
-        <p>If you did not request this, please ignore this email.</p>`
-      );
-
-      console.log({ createUser });
-
-      return res.status(200).json(jsonResponse(true, 'User created successfully. Please verify your email.', createUser));
+      return createUser;
     });
+
+    if (!result) {
+      return res.status(409).json(jsonResponse(false, 'User already exists', null));
+    }
+
+    const verifyLink = `https://mockshark.vercel.app/verify-email?id=${result.id}`;
+
+    await sendEmail(
+      email,
+      'Verify Your Email - Mockshark',
+      `<p>Hi ${name},</p>
+      <p>Thanks for registering with Mockshark.</p>
+      <p>Please click the link below to verify your email address:</p>
+      <a href="${verifyLink}" target="_blank">Verify Email</a>
+      <p>If you did not request this, please ignore this email.</p>`
+    );
+
+    console.log({ result });
+
+    return res.status(200).json(jsonResponse(true, 'User created successfully. Please verify your email.', result));
+
   } catch (error) {
     console.error(error);
+    if (error.message === 'User already exists') {
+      return res.status(409).json(jsonResponse(false, 'User already exists', null));
+    }
     return res.status(500).json(jsonResponse(false, 'Something went wrong', null));
   }
 };
+
 
 
 //login with password
