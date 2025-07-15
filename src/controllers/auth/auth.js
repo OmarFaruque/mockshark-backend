@@ -91,9 +91,9 @@ export const register = async (req, res) => {
       // Send verification email
       await sendEmail(
         email,
-        'Verify Your Email - Voltech',
+        'Verify Your Email - Mockshark',
         `<p>Hi ${name},</p>
-        <p>Thanks for registering with Voltech.</p>
+        <p>Thanks for registering with Mockshark.</p>
         <p>Please click the link below to verify your email address:</p>
         <a href="${verifyLink}" target="_blank">Verify Email</a>
         <p>If you did not request this, please ignore this email.</p>`
@@ -1320,7 +1320,7 @@ export const sendResetPasswordLink = async (req, res) => {
     },
   });
 
-  const link = `http://localhost:3000/reset-password?token=${token}`;
+  const link = `https://www.mockshark.com/reset-password?token=${token}`;
 
   await sendEmail(
     email,
