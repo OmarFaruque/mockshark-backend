@@ -20,23 +20,21 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async (user_email, subject, body) => {
-  var mailOptions = {
-    from: process.env.GMAIL_ID,
-    to: user_email,
-    subject: subject,
-    //   text: `Hi user, thank you for your order.`,
-    html: body,
-  };
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.GMAIL_ID,
+      to: user_email,
+      subject: subject,
+      html: body,
+    });
 
-  await transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-      return res.status(500).json(jsonResponse(false, error, null));
-    } else {
-      console.log("Email sent: " + info.response);
-      return res.status(200).json(jsonResponse(true, "Email is sent!", null));
-    }
-  });
+    console.log("Email sent: " + info.response);
+    return { success: true, message: "Email is sent!" };
+  } catch (error) {
+    console.log("Email send error:", error);
+    return { success: false, message: error.message };
+  }
 };
+
 
 export default sendEmail;

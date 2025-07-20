@@ -32,6 +32,8 @@ import {
  
   handlePaddleWebhook,
  
+  updateBundle,
+ 
   updateOrder,
 } from "../../controllers/order/order.js";
 // import {
@@ -66,6 +68,8 @@ router.get("/v1/licenses" , getUserLicenses)
 router.post("/v1/bundle", createBundle)
 router.get('/v1/bundles', getBundles  )
 router.delete('/v1/bundle/:id', deleteBundle); 
+
+router.put('/v1/bundle-update/:id', updateBundle);
 
 router.get("/v1/download-with-credit", downloadWithCredit);
 

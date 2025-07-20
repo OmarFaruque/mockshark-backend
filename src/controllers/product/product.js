@@ -226,7 +226,7 @@ export const createProduct = async (req, res) => {
               .json(
                 jsonResponse(
                   false,
-                  "Something went wrong while uploading image and you cannot upload more than 3 images.",
+                  "Something went wrong while uploading image and you cannot upload more than 5 images.",
                   null
                 )
               );
@@ -567,6 +567,7 @@ export const getProduct = async (req, res) => {
 
 //update product
 export const updateProduct = async (req, res) => {
+  
   try {
     return await prisma.$transaction(async (tx) => {
       const {
@@ -608,14 +609,14 @@ export const updateProduct = async (req, res) => {
           .status(404)
           .json(jsonResponse(false, "This product does not exist", null));
 
-      const user = await tx.user.findFirst({
-        where: { id: findProduct.userId },
-      });
+      // const user = await tx.user.findFirst({
+      //   where: { id: findProduct?.userId },
+      // });
 
-      if (!user)
-        return res
-          .status(404)
-          .json(jsonResponse(false, "This user does not exist", null));
+      // if (!user)
+      //   return res
+      //     .status(404)
+      //     .json(jsonResponse(false, "This user does not exist", null));
 
       //check if slug already exists
       if (name) {
@@ -666,9 +667,8 @@ export const updateProduct = async (req, res) => {
           isTrending: isTrending === "true" ? true : false,
           isFeatured: isFeatured === "true" ? true : false,
           updatedBy: req.user.id,
-          slug: name
-            ? `${slugify(user.name)}-${slugify(name)}`
-            : findProduct.slug,
+          slug: name ? slugify(name) : findProduct.slug,
+
         },
       });
 
@@ -676,16 +676,16 @@ export const updateProduct = async (req, res) => {
         if (req.files) {
           //for inserting new images to a particular product
 
-          //max 3 image
+          //max 5 image
           const productImages = await tx.productImage.findMany({
             where: { productId: req.params.id },
           });
 
-          if (req.files.length + productImages.length > 3) {
+          if (req.files.length + productImages.length > 5) {
             return res
               .status(404)
               .json(
-                jsonResponse(false, "You cannot add more than 3 images", null)
+                jsonResponse(false, "You cannot add more than 5 images", null)
               );
           }
 
@@ -1029,10 +1029,10 @@ export const banProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     return await prisma.$transaction(async (tx) => {
-      const product = await tx.product.update({
-        where: { id: req.params.id },
-        data: { deletedBy: req.user.id, isDeleted: true },
-      });
+    const product = await tx.product.delete({
+  where: { id: req.params.id },
+});
+
 
       if (product) {
         const productImage = await prisma.productImage.findMany({

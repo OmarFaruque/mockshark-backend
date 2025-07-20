@@ -64,15 +64,15 @@ export const createOrder = async (req, res) => {
           // paymentMethod,
            billingFirstName,     
     billingLastName,     
-    billingCompany,       
-    billingCountry,       
+    // billingCompany,       
+    // billingCountry,       
     billingEmail,         
-    billingPhone ,        
-    address,              
-    apartment,            
-    city,                 
-    state,                
-    postalCode,
+    // billingPhone ,        
+    // address,              
+    // apartment,            
+    // city,                 
+    // state,                
+    // postalCode,
         ],
         [
           // "Name",
@@ -85,15 +85,15 @@ export const createOrder = async (req, res) => {
           // "Payment Method",
           "Billing First Name",
           "Billing Last Name",
-          "Billing Company",
-          "Billing Country",
+          // "Billing Company",
+          // "Billing Country",
           "Billing Email",
-          "Billing Phone",
-          "Address",
-          "Apartment",
-          "City",
-          "State",
-          "Postal Code",
+          // "Billing Phone",
+          // "Address",
+          // "Apartment",
+          // "City",
+          // "State",
+          // "Postal Code",
           
         ]
       );
@@ -1144,29 +1144,41 @@ export const getUserDownloads = async (req, res) => {
       });
     }
 
+    // Step 1: Get all downloads
     const downloads = await prisma.downloadUrl.findMany({
       where: { userId },
     });
 
-    const downloadsWithProduct = await Promise.all(
-      downloads.map(async (item) => {
-        const product = await prisma.product.findUnique({
-          where: { id: item.productId },
-          select: { name: true },
-        });
+    // Step 2: Extract productIds safely (remove null/undefined)
+    const productIds = downloads
+      .map((d) => d.productId)
+      .filter((id) => typeof id === 'string' && id.trim() !== '');
 
-        return {
-          ...item,
-          productName: product?.name ?? "Unknown Product",
-        };
-      })
-    );
+    // Step 3: Fetch all products in a single query
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: productIds }
+      },
+      select: { id: true, name: true }
+    });
+
+    // Step 4: Map product names to downloads
+    const productMap = products.reduce((acc, product) => {
+      acc[product.id] = product.name;
+      return acc;
+    }, {});
+
+    const downloadsWithProduct = downloads.map(item => ({
+      ...item,
+      productName: productMap[item.productId] ?? 'Unknown Product'
+    }));
 
     return res.status(200).json({
       success: true,
       message: "Downloads fetched successfully",
       data: downloadsWithProduct,
     });
+
   } catch (error) {
     console.error("Download fetch error:", error);
     return res.status(500).json({
@@ -1176,6 +1188,7 @@ export const getUserDownloads = async (req, res) => {
     });
   }
 };
+
 
 export const getUserLicenses = async (req, res) => {
   const { userId } = req.query;
@@ -1258,6 +1271,46 @@ export const createBundle = async (req, res) => {
     });
   }
 };
+
+
+export const updateBundle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, price, regularPrice, discountPrice, mockups } = req.body;
+
+    if (!title || !price || !regularPrice || !mockups) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required',
+      });
+    }
+
+    const updatedBundle = await prisma.bundle.update({
+      where: { id },
+      data: {
+        title,
+        price: parseFloat(price),
+        regularPrice: parseFloat(regularPrice),
+        discountPrice: parseFloat(discountPrice),
+        mockups: parseInt(mockups),
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Bundle updated successfully',
+      data: updatedBundle,
+    });
+  } catch (error) {
+    console.error('PUT /v1/bundles/:id error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update bundle',
+      error: error.message,
+    });
+  }
+};
+
 
 export const getBundles = async (req, res) => {
   try {
