@@ -51,7 +51,7 @@ router.put(
   updateCategory
 );
 router.put("/v1/categories/:id/ban", categoryBan, verify, banCategory);
-router.delete("/v1/categories/:id", categoryRemove, verify, deleteCategory);
+router.delete("/v1/categories/:id",  verify, deleteCategory);
 
 //For customer
 router.get("/v1/customer/categories", getCategoriesForCustomer);

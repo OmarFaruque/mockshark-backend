@@ -188,92 +188,136 @@ export const getUser = async (req, res) => {
 
 //update user
 export const updateUser = async (req, res) => {
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const {
-        roleId,
-        name,
-        fullname,
-        email,
-        about,
-        phone,
-        address,
-        language,
-        billingAddress,
-        city,
-        country,
-        postalCode,
-        initialPaymentAmount,
-        initialPaymentDue,
-        installmentTime,
-        billingFirstName,     
-        billingLastName,      
-        billingCompany,       
-        billingCountry,      
-        billingEmail,         
-        billingPhone,
-        apartment,
-        state,                              
-      } = req.body;
+  // First handle the image upload outside the transaction
+  let imageUrl = req.user?.image;
 
-     let imageUrl = req.user?.image;
-
-if (req.file) {
-  try {
-    const result = await uploadToCLoudinary(req.file, "user_profiles");
-    imageUrl = result.secure_url;
-  } catch (err) {
-    console.error("Cloudinary Upload Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to upload image to Cloudinary",
+  if (req.file) {
+    console.log("File received:", {
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
     });
+
+    try {
+      // Validate file
+      if (!req.file.buffer || req.file.buffer.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Uploaded file is empty or corrupted",
+        });
+      }
+
+      // Upload to Cloudinary
+      // Upload to Cloudinary
+      const result = await uploadToCLoudinary(req.file, "user_profiles");
+      console.log("Cloudinary upload result URL:", result);
+
+      if (!result) {
+        return res.status(500).json({
+          success: false,
+          message: "Cloudinary upload failed - no URL returned",
+        });
+      }
+
+      imageUrl = result; // <-- assign the URL string directly
+    } catch (err) {
+      console.error("Cloudinary upload error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to upload image",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
+    }
   }
-}
 
-      const updatedUser = await tx.user.update({
-        where: { id: req.params.id },
-        data: {
-          roleId,
-          name,
-          fullname,
-          email,
-          about,
-          phone,
-          address,
-          language,
-          billingAddress,
-          city,
-          country,
-          postalCode,
-          image: imageUrl, // this is the cloudinary url
-          initialPaymentAmount,
-          initialPaymentDue,
-          installmentTime,
-          billingFirstName,     
-          billingLastName,      
-          billingCompany,       
-          billingCountry,      
-          billingEmail,         
-          billingPhone,
-          apartment,
-          state,   
-          updatedBy: req.user?.id,
-        },
-      });
+  // Now handle the database update in a transaction
+  try {
+    const {
+      roleId,
+      name,
+      fullname,
+      email,
+      about,
+      phone,
+      address,
+      language,
+      billingAddress,
+      city,
+      country,
+      postalCode,
+      initialPaymentAmount,
+      initialPaymentDue,
+      installmentTime,
+      billingFirstName,
+      billingLastName,
+      billingCompany,
+      billingCountry,
+      billingEmail,
+      billingPhone,
+      apartment,
+      state,
+    } = req.body;
 
-      return res.status(200).json({
-        success: true,
-        message: "Profile has been updated.",
-        user: updatedUser,
-      });
+    const updatedUser = await prisma.$transaction(
+      async (tx) => {
+        return await tx.user.update({
+          where: { id: req.params.id },
+          data: {
+            roleId,
+            name,
+            fullname,
+            email,
+            about,
+            phone,
+            address,
+            language,
+            billingAddress,
+            city,
+            country,
+            postalCode,
+            image: imageUrl,
+            initialPaymentAmount,
+            initialPaymentDue,
+            installmentTime,
+            billingFirstName,
+            billingLastName,
+            billingCompany,
+            billingCountry,
+            billingEmail,
+            billingPhone,
+            apartment,
+            state,
+            updatedBy: req.user?.id,
+          },
+        });
+      },
+      {
+        maxWait: 10000, // 10 seconds max wait
+        timeout: 10000, // 10 seconds timeout
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Database error:", error);
+
+    // Handle Prisma transaction timeout specifically
+    if (error.code === "P2028") {
+      return res.status(500).json({
+        success: false,
+        message: "Database operation timed out",
+        suggestion: "Please try again with a smaller file or contact support",
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
+      message: "Failed to update profile",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

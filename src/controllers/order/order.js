@@ -161,7 +161,7 @@ export const createOrder = async (req, res) => {
           //calculate subtotal and subtotal cost price
           // subtotal = subtotal + discountedRetailPrice;
           // subtotal = subtotal + orderItems[i]?.totalPrice;
-          // subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
+          subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
           const itemTotal = orderItems[i].quantity * productAttribute.discountedRetailPrice;
 const itemCost = orderItems[i].quantity * productAttribute.costPrice;
 
