@@ -6,8 +6,8 @@ import sendEmail from "../../utils/emailService.js";
 import jsonResponse from "../../utils/jsonResponse.js";
 import prisma from "../../utils/prismaClient.js";
 import validateInput from "../../utils/validateInput.js";
-import axios from 'axios';
- // adjust based on your structure
+import axios from "axios";
+// adjust based on your structure
 // dotenv.config();
 
 const module_name = "order";
@@ -37,17 +37,17 @@ export const createOrder = async (req, res) => {
         // // totalItems,
         // // subtotalCost,
         // // subtotal,
-           billingFirstName,     
-    billingLastName,     
-    billingCompany,       
-    billingCountry,       
-    billingEmail,         
-    billingPhone ,        
-    address,              
-    apartment,            
-    city,                 
-    state,                
-    postalCode,
+        billingFirstName,
+        billingLastName,
+        billingCompany,
+        billingCountry,
+        billingEmail,
+        billingPhone,
+        address,
+        apartment,
+        city,
+        state,
+        postalCode,
         orderItems,
       } = req.body;
 
@@ -62,17 +62,17 @@ export const createOrder = async (req, res) => {
           // customerCity,
           // invoiceNumber,
           // paymentMethod,
-           billingFirstName,     
-    billingLastName,     
-    // billingCompany,       
-    // billingCountry,       
-    billingEmail,         
-    // billingPhone ,        
-    // address,              
-    // apartment,            
-    // city,                 
-    // state,                
-    // postalCode,
+          billingFirstName,
+          billingLastName,
+          // billingCompany,
+          // billingCountry,
+          billingEmail,
+          // billingPhone ,
+          // address,
+          // apartment,
+          // city,
+          // state,
+          // postalCode,
         ],
         [
           // "Name",
@@ -94,7 +94,6 @@ export const createOrder = async (req, res) => {
           // "City",
           // "State",
           // "Postal Code",
-          
         ]
       );
 
@@ -162,11 +161,12 @@ export const createOrder = async (req, res) => {
           // subtotal = subtotal + discountedRetailPrice;
           // subtotal = subtotal + orderItems[i]?.totalPrice;
           subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
-          const itemTotal = orderItems[i].quantity * productAttribute.discountedRetailPrice;
-const itemCost = orderItems[i].quantity * productAttribute.costPrice;
+          const itemTotal =
+            orderItems[i].quantity * productAttribute.discountedRetailPrice;
+          const itemCost = orderItems[i].quantity * productAttribute.costPrice;
 
-subtotal += itemTotal;
-subtotalCost += itemCost;
+          subtotal += itemTotal;
+          subtotalCost += itemCost;
 
           // subtotalCost =
           //   subtotalCost + orderItems[i].quantity * productAttribute.costPrice;
@@ -184,7 +184,7 @@ subtotalCost += itemCost;
         where: { id: couponId, isActive: true },
       });
 
-const invoiceHtml = `
+      const invoiceHtml = `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
     <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
     
@@ -213,23 +213,37 @@ const invoiceHtml = `
         </tr>
       </thead>
       <tbody>
-        ${newOrderItems?.map(
-          (orderItm) => `
+        ${newOrderItems
+          ?.map(
+            (orderItm) => `
             <tr>
-              <td style="border: 1px solid #ccc; padding: 8px;">${orderItm.name} (${orderItm.size})</td>
-              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.discountedRetailPrice.toFixed(2)} $</td>
-              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.quantity}</td>
-              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalPrice.toFixed(2)} $</td>
+              <td style="border: 1px solid #ccc; padding: 8px;">${
+                orderItm.name
+              } (${orderItm.size})</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.discountedRetailPrice.toFixed(
+                2
+              )} $</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${
+                orderItm.quantity
+              }</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalPrice.toFixed(
+                2
+              )} $</td>
             </tr>
           `
-        ).join("")}
+          )
+          .join("")}
         <tr>
           <td colspan="3" style="text-align: right; padding: 8px;"><strong>Coupon Discount:</strong></td>
-          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${coupon?.discountAmount ?? 0} $</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${
+            coupon?.discountAmount ?? 0
+          } $</td>
         </tr>
         <tr>
           <td colspan="3" style="text-align: right; padding: 8px;"><strong>Subtotal:</strong></td>
-          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotal.toFixed(2)} $</strong></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotal.toFixed(
+            2
+          )} $</strong></td>
         </tr>
       </tbody>
     </table>
@@ -238,103 +252,102 @@ const invoiceHtml = `
   </div>
 `;
 
-
-
-
       //create order
-  let newOrder = await tx.order.create({
-  data: {
-    user: {
-      connect: { id: userId }
-    },
-    couponId,             // ensure this variable is defined or null
-    invoiceNumber,        // ensure this variable is defined or null
-    billingFirstName,
-    billingLastName,
-    billingCompany,
-    billingCountry,
-    billingEmail,
-    billingPhone,
-    address,
-    apartment,
-    city,
-    state,
-    postalCode,
-    invoiceHtml,
-    totalItems: totalNumberOfItems,
-    subtotalCost: subtotalCost,
-    subtotal: subtotal,
-    orderItems: {
-      create: orderItems.map((item) => ({
-        name: item.name,
-        size: item.size,
-        costPrice: item.costPrice,
-        retailPrice: item.retailPrice,
-        discountedRetailPrice: item.discountedRetailPrice || item.retailPrice,
-        quantity: item.quantity,
-        totalCostPrice: item.costPrice * item.quantity,
-        totalPrice: item.retailPrice * item.quantity,
-        product: {
-          connect: { id: item.productId }
+      let newOrder = await tx.order.create({
+        data: {
+          user: {
+            connect: { id: userId },
+          },
+          couponId, // ensure this variable is defined or null
+          invoiceNumber, // ensure this variable is defined or null
+          billingFirstName,
+          billingLastName,
+          billingCompany,
+          billingCountry,
+          billingEmail,
+          billingPhone,
+          address,
+          apartment,
+          city,
+          state,
+          postalCode,
+          invoiceHtml,
+          totalItems: totalNumberOfItems,
+          subtotalCost: subtotalCost,
+          subtotal: subtotal,
+          orderItems: {
+            create: orderItems.map((item) => ({
+              name: item.name,
+              size: item.size,
+              costPrice: item.costPrice,
+              retailPrice: item.retailPrice,
+              discountedRetailPrice:
+                item.discountedRetailPrice || item.retailPrice,
+              quantity: item.quantity,
+              totalCostPrice: item.costPrice * item.quantity,
+              totalPrice: item.retailPrice * item.quantity,
+              product: {
+                connect: { id: item.productId },
+              },
+              productAttribute: {
+                connect: { id: item.productAttributeId },
+              },
+            })),
+          },
         },
-        productAttribute: {
-          connect: { id: item.productAttributeId }
-        }
-      })),
-    }
-  },
-});
+      });
 
-//bundle order er jonno license certificate create korar code ekhane add korbe
-// const user = await tx.user.findUnique({
-//   where: { id: userId },
-//   select: {
-//     credits: true,
-//     creditsUsed: true,
-//   },
-// });
+      //bundle order er jonno license certificate create korar code ekhane add korbe
+      // const user = await tx.user.findUnique({
+      //   where: { id: userId },
+      //   select: {
+      //     credits: true,
+      //     creditsUsed: true,
+      //   },
+      // });
 
-// if (!user || (user.credits ?? 0) <= (user.creditsUsed ?? 0)) {
-//   return res.status(400).json({ error: "No available credits" });
-// }
+      // if (!user || (user.credits ?? 0) <= (user.creditsUsed ?? 0)) {
+      //   return res.status(400).json({ error: "No available credits" });
+      // }
 
-// // Update creditsUsed
-// await tx.user.update({
-//   where: { id: userId },
-//   data: {
-//     creditsUsed: { increment: 1 },
-//     credits: { decrement: 1 }, // Decrement credits by 1
-//   },
-// });
+      // // Update creditsUsed
+      // await tx.user.update({
+      //   where: { id: userId },
+      //   data: {
+      //     creditsUsed: { increment: 1 },
+      //     credits: { decrement: 1 }, // Decrement credits by 1
+      //   },
+      // });
 
+      // =====================
+      // License certificate ar download url create korar code ekhane add korbe
+      // =====================
 
-// =====================
-// License certificate ar download url create korar code ekhane add korbe
-// =====================
+      // Filter bundle orders (e.g., productId like "bundle-10")
+      // const bundleItems = newOrderItems.filter(item =>
+      //   item.productId.startsWith("bundle-")
+      // );
 
-// Filter bundle orders (e.g., productId like "bundle-10")
-// const bundleItems = newOrderItems.filter(item =>
-//   item.productId.startsWith("bundle-")
-// );
+      // // Add credits for each bundle
+      // for (const bundle of bundleItems) {
+      //   const creditsToAdd = parseInt(bundle.licenseType); // "10" from "10 Mockups"
+      //   if (!isNaN(creditsToAdd)) {
+      //     await tx.user.update({
+      //       where: { id: userId },
+      //       data: {
+      //         credits: { increment: creditsToAdd }
+      //       }
+      //     });
+      //   }
+      // }
 
-// // Add credits for each bundle
-// for (const bundle of bundleItems) {
-//   const creditsToAdd = parseInt(bundle.licenseType); // "10" from "10 Mockups"
-//   if (!isNaN(creditsToAdd)) {
-//     await tx.user.update({
-//       where: { id: userId },
-//       data: {
-//         credits: { increment: creditsToAdd }
-//       }
-//     });
-//   }
-// }
-
-
-
-
-const licenseTexts = {
-  "Personal Use License": (buyerName, orderNumber, date, productTitle) => `
+      const licenseTexts = {
+        "Personal Use License": (
+          buyerName,
+          orderNumber,
+          date,
+          productTitle
+        ) => `
 MockShark License Certificate
 
 License Type: Personal Use License
@@ -354,7 +367,7 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-  "Commercial License": (buyerName, orderNumber, date, productTitle) => `
+        "Commercial License": (buyerName, orderNumber, date, productTitle) => `
 MockShark License Certificate
 
 License Type: Commercial License
@@ -373,7 +386,12 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-  "Extended Commercial License": (buyerName, orderNumber, date, productTitle) => `
+        "Extended Commercial License": (
+          buyerName,
+          orderNumber,
+          date,
+          productTitle
+        ) => `
 MockShark License Certificate
 
 License Type: Extended Commercial License
@@ -392,84 +410,81 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-  // Extra aliases (frontend jodi Commercial/Extended Commercial dei)
-  "Commercial": (...args) => licenseTexts["Commercial License"](...args),
-  "Extended Commercial": (...args) => licenseTexts["Extended Commercial License"](...args),
-};
+        // Extra aliases (frontend jodi Commercial/Extended Commercial dei)
+        Commercial: (...args) => licenseTexts["Commercial License"](...args),
+        "Extended Commercial": (...args) =>
+          licenseTexts["Extended Commercial License"](...args),
+      };
 
+      // newOrderItems er moddhe jodi licenseType thake taile seta nibe, na hole default "Personal Use License" dhore nibe
+      for (const item of newOrderItems) {
+        const licenseType = item.licenseType || "Personal Use License";
+        const templateFn =
+          licenseTexts[licenseType] || licenseTexts["Personal Use License"];
+        const licenseText = templateFn(
+          billingFirstName + " " + billingLastName,
+          newOrder.invoiceNumber,
+          new Date().toLocaleDateString(),
+          item.name
+        );
 
-// newOrderItems er moddhe jodi licenseType thake taile seta nibe, na hole default "Personal Use License" dhore nibe
-for (const item of newOrderItems) {
-  const licenseType = item.licenseType || "Personal Use License";
-const templateFn = licenseTexts[licenseType] || licenseTexts["Personal Use License"];
-const licenseText = templateFn(
-  billingFirstName + " " + billingLastName,
- newOrder.invoiceNumber,
-  new Date().toLocaleDateString(),
-  item.name
-);
+        // LicenseCertificate record create koro
+        await tx.licenseCertificate.create({
+          data: {
+            userId,
+            orderId: newOrder.id,
+            productId: item.productId,
+            licenseType,
+            licenseText,
+          },
+        });
 
-  // LicenseCertificate record create koro
-  await tx.licenseCertificate.create({
-    data: {
-      userId,
-      orderId: newOrder.id,
-      productId: item.productId,
-      licenseType,
-      licenseText,
-    },
-  });
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+        });
 
- 
-  const product = await tx.product.findUnique({
-    where: { id: item.productId }
-  });
-
-  if (product?.downloadUrl) {
-    await tx.downloadUrl.create({
-      data: {
-        userId,
-        productId: item.productId,
-        orderId: newOrder.id,
-        downloadUrl: product.downloadUrl,
-      },
-    });
-  }
-}
-
-
+        if (product?.downloadUrl) {
+          await tx.downloadUrl.create({
+            data: {
+              userId,
+              productId: item.productId,
+              orderId: newOrder.id,
+              downloadUrl: product.downloadUrl,
+            },
+          });
+        }
+      }
 
       if (!newOrder) {
         return res
           .status(200)
           .json(jsonResponse(false, `Order cannot be placed`, null));
       }
-for (let i = 0; i < newOrderItems.length; i++) {
-  const product = await tx.product.findFirst({
-    where: {
-      id: newOrderItems[i].productId,
-      isDeleted: false,
-      isActive: true,
-    },
-  });
+      // for (let i = 0; i < newOrderItems.length; i++) {
+      //   const product = await tx.product.findFirst({
+      //     where: {
+      //       id: newOrderItems[i].productId,
+      //       isDeleted: false,
+      //       isActive: true,
+      //     },
+      //   });
 
-  if (!product?.downloadUrl) continue;
+      //   if (!product?.downloadUrl) continue;
 
- try {
-  await tx.downloadUrl.create({
-    data: {
-      userId,
-      productId: newOrderItems[i].productId,
-      orderId: newOrder.id,
-      downloadUrl: product.downloadUrl,
-    },
-  });
-  console.log("DownloadUrl created");
-} catch (err) {
-  console.error("Failed to insert download url:", err);
-}
-
-}
+      //   try {
+      //     await tx.downloadUrl.create({
+      //       data: {
+      //         userId,
+      //         productId: newOrderItems[i].productId,
+      //         orderId: newOrder.id,
+      //         downloadUrl: product.downloadUrl,
+      //       },
+      //     });
+      //     console.log("DownloadUrl created");
+      //   } catch (err) {
+      //     console.error("Failed to insert download url:", err);
+      //   }
+      // }
 
       //reduce stock amount
       for (let i = 0; i < orderItems.length; i++) {
@@ -518,15 +533,17 @@ for (let i = 0; i < newOrderItems.length; i++) {
               </tr>
             </thead>
             <tbody>
-             ${newOrderItems?.map(
-  (orderItm) =>
-    `<tr>
+             ${newOrderItems
+               ?.map(
+                 (orderItm) =>
+                   `<tr>
       <td>${orderItm.name} (${orderItm.size})</td>
       <td>${orderItm.discountedRetailPrice.toFixed(2)} $</td>
       <td>${orderItm.quantity}</td>
       <td>${orderItm.totalPrice.toFixed(2)} $</td>
     </tr>`
-).join("")}
+               )
+               .join("")}
 
                 <tr>
                   <td></td>
@@ -1131,7 +1148,6 @@ export const deleteOrder = async (req, res) => {
   }
 };
 
-
 // controllers/download/getDownloads.js
 export const getUserDownloads = async (req, res) => {
   try {
@@ -1152,14 +1168,14 @@ export const getUserDownloads = async (req, res) => {
     // Step 2: Extract productIds safely (remove null/undefined)
     const productIds = downloads
       .map((d) => d.productId)
-      .filter((id) => typeof id === 'string' && id.trim() !== '');
+      .filter((id) => typeof id === "string" && id.trim() !== "");
 
     // Step 3: Fetch all products in a single query
     const products = await prisma.product.findMany({
       where: {
-        id: { in: productIds }
+        id: { in: productIds },
       },
-      select: { id: true, name: true }
+      select: { id: true, name: true },
     });
 
     // Step 4: Map product names to downloads
@@ -1168,9 +1184,9 @@ export const getUserDownloads = async (req, res) => {
       return acc;
     }, {});
 
-    const downloadsWithProduct = downloads.map(item => ({
+    const downloadsWithProduct = downloads.map((item) => ({
       ...item,
-      productName: productMap[item.productId] ?? 'Unknown Product'
+      productName: productMap[item.productId] ?? "Unknown Product",
     }));
 
     return res.status(200).json({
@@ -1178,7 +1194,6 @@ export const getUserDownloads = async (req, res) => {
       message: "Downloads fetched successfully",
       data: downloadsWithProduct,
     });
-
   } catch (error) {
     console.error("Download fetch error:", error);
     return res.status(500).json({
@@ -1188,7 +1203,6 @@ export const getUserDownloads = async (req, res) => {
     });
   }
 };
-
 
 export const getUserLicenses = async (req, res) => {
   const { userId } = req.query;
@@ -1234,16 +1248,15 @@ export const getUserLicenses = async (req, res) => {
   }
 };
 
-
 // POST a new bundle
 export const createBundle = async (req, res) => {
   try {
     const { title, price, regularPrice, discountPrice, mockups } = req.body;
 
-    if (!title || !price || !regularPrice  || !mockups) {
+    if (!title || !price || !regularPrice || !mockups) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: "All fields are required",
       });
     }
 
@@ -1259,19 +1272,18 @@ export const createBundle = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Bundle created successfully',
+      message: "Bundle created successfully",
       data: newBundle,
     });
   } catch (error) {
-    console.error('POST /v1/bundles error:', error);
+    console.error("POST /v1/bundles error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to create bundle',
+      message: "Failed to create bundle",
       error: error.message,
     });
   }
 };
-
 
 export const updateBundle = async (req, res) => {
   try {
@@ -1281,7 +1293,7 @@ export const updateBundle = async (req, res) => {
     if (!title || !price || !regularPrice || !mockups) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: "All fields are required",
       });
     }
 
@@ -1298,36 +1310,35 @@ export const updateBundle = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Bundle updated successfully',
+      message: "Bundle updated successfully",
       data: updatedBundle,
     });
   } catch (error) {
-    console.error('PUT /v1/bundles/:id error:', error);
+    console.error("PUT /v1/bundles/:id error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update bundle',
+      message: "Failed to update bundle",
       error: error.message,
     });
   }
 };
 
-
 export const getBundles = async (req, res) => {
   try {
     const bundles = await prisma.bundle.findMany({
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: "asc" },
     });
 
     return res.status(200).json({
       success: true,
-      message: 'Bundles fetched successfully',
+      message: "Bundles fetched successfully",
       data: bundles,
     });
   } catch (error) {
-    console.error('GET /v1/bundles error:', error);
+    console.error("GET /v1/bundles error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch bundles',
+      message: "Failed to fetch bundles",
       error: error.message,
     });
   }
@@ -1342,19 +1353,18 @@ export const deleteBundle = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Bundle deleted successfully',
+      message: "Bundle deleted successfully",
       data: deleted,
     });
   } catch (error) {
-    console.error('DELETE /v1/bundle/:id error:', error);
+    console.error("DELETE /v1/bundle/:id error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to delete bundle',
+      message: "Failed to delete bundle",
       error: error.message,
     });
   }
 };
-
 
 export const downloadWithCredit = async (req, res) => {
   const { userId, productId } = req.query;
@@ -1370,18 +1380,9 @@ export const downloadWithCredit = async (req, res) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
 
   if (!user || !product) {
-    return res.status(404).json({ success: false, message: "User or Product not found" });
-  }
-
-  const hasDownloaded = await prisma.downloadUrl.findFirst({
-    where: { userId, productId },
-  });
-
-  if (hasDownloaded) {
-    return res.status(200).json({
-      success: true,
-      message: "Already Purchased",
-      downloadUrl: hasDownloaded.downloadUrl,
+    return res.status(404).json({
+      success: false,
+      message: "User or Product not found",
     });
   }
 
@@ -1393,150 +1394,185 @@ export const downloadWithCredit = async (req, res) => {
     });
   }
 
+  // Generate unique order number for each download
+  const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+  // Update user's used credit
   await prisma.user.update({
     where: { id: userId },
     data: { creditsUsed: { increment: 1 } },
   });
- await prisma.licenseCertificate.create({
-  data: {
-    userId,
 
-    productId ,  // ❌ Missing comma here!
-    licenseType: 'commercial',
-    licenseText: `Usage Rights:
+  const licenseText = `
+MockShark License Certificate
+
+License Type: Commercial License
+Buyer Name: ${user.name}
+Order Number: ${orderId}
+Download Date: ${new Date().toLocaleDateString()}
+Product: ${product.name}
+
+Usage Rights:
 ✓ Client work, branding, websites, social media ads
 ✓ Unlimited commercial projects
 ✘ Cannot resell or redistribute the mockup file
 ✘ Cannot include in products where mockup is the main value
 
 Issued by: MockShark.com
-Support: support@mockshark.com`
-  },
-});
+Support: support@mockshark.com
+  `.trim();
+
+  // Save license with unique orderId
+  await prisma.licenseCertificate.create({
+    data: {
+      userId,
+      productId,
+      // orderId, // store this in DB (add it to your schema)
+      licenseType: "Commercial License",
+      licenseText,
+    },
+  });
+
+  // Store download URL (you can keep it for record/log)
   await prisma.downloadUrl.create({
     data: {
       userId,
       productId,
       downloadUrl: product.downloadUrl,
-      
     },
   });
- 
-
 
   return res.status(200).json({
     success: true,
     message: "Product Purchased",
     downloadUrl: product.downloadUrl,
+    // orderId, // send it back for frontend license identification
   });
 };
 
 
 export const createBundleOrder = async (req, res) => {
   try {
+    const {
+      userId,
+      invoiceNumber,
+      billingFirstName,
+      billingLastName,
+      billingEmail,
+      billingPhone,
+      address,
+      city,
+      postalCode,
+      bundleId,
+      credits,
+      price,
+    } = req.body;
+
+    if (
+      !userId ||
+      !bundleId ||
+      !credits ||
+      !price ||
+      !billingFirstName ||
+      !billingLastName ||
+      !billingEmail
+      // billingPhone, address, city, postalCode are optional here
+    ) {
+      return res
+        .status(400)
+        .json(jsonResponse(false, "Missing required fields", null));
+    }
+
     return await prisma.$transaction(async (tx) => {
-      const {
-        userId,
-        invoiceNumber,
-        billingFirstName,
-        billingLastName,
-        billingEmail,
-        billingPhone,
-        address,
-        city,
-        postalCode,
-        bundleId,
-        credits,
-        price,
-      } = req.body;
+      const invoiceHtml = `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
+          <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
+          <p>Dear <strong>${billingFirstName} ${billingLastName}</strong>,</p>
+          <p>Your bundle order has been placed successfully!</p>
 
-      if (!bundleId || !credits || !price) {
-        return res.status(400).json(jsonResponse(false, "Missing bundle info", null));
-      }
-const invoiceHtml = `
-  <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
-    <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
-    <p>Dear <strong>${billingFirstName} ${billingLastName}</strong>,</p>
-    <p>Your bundle order has been placed successfully!</p>
+          <h3 style="margin-top: 30px; color: #192533;">Order Info:</h3>
+          <table style="width: 100%; margin-bottom: 20px;">
+            <tr><td><strong>Invoice #:</strong></td><td>${invoiceNumber}</td></tr>
+            <tr><td><strong>Phone:</strong></td><td>${
+              billingPhone || "-"
+            }</td></tr>
+            <tr><td><strong>Address:</strong></td><td>${address || "-"}, ${
+        city || "-"
+      }, ${postalCode || "-"}</td></tr>
+            <tr><td><strong>Credits:</strong></td><td>${credits}</td></tr>
+            <tr><td><strong>Total:</strong></td><td>$${price}</td></tr>
+          </table>
 
-    <h3 style="margin-top: 30px; color: #192533;">Order Info:</h3>
-    <table style="width: 100%; margin-bottom: 20px;">
-      <tr><td><strong>Phone:</strong></td><td>${billingPhone}</td></tr>
-      <tr><td><strong>Address:</strong></td><td>${address}, ${city}, ${postalCode}</td></tr>
-      <tr><td><strong>Credits:</strong></td><td>${credits}</td></tr>
-      <tr><td><strong>Total:</strong></td><td>$${price}</td></tr>
-    </table>
+          <p style="margin-top: 30px;">Thanks for shopping with MockShark 💚</p>
+        </div>
+      `;
 
-    <p style="margin-top: 30px;">Thanks for shopping with MockShark 💚</p>
-  </div>
-`;
+      const orderItem = {
+        name: `${credits} Mockups Bundle`,
+        quantity: 1,
+        size: `${credits} Credits`,
+        totalPrice: price,
+        retailPrice: price,
+        costPrice: price,
+        discountedRetailPrice: price,
+        totalCostPrice: price,
+      };
 
-      // Create the bundle order first
+      // 1. Create Bundle Order with nested order item, connect user relation explicitly
       const newBundleOrder = await tx.bundleOrder.create({
         data: {
-          userId,
+          user: { connect: { id: userId } },
           invoiceNumber,
           billingFirstName,
           billingLastName,
           billingEmail,
-          billingPhone,
-          address,
-          city,
-          invoiceHtml: invoiceHtml,
-          postalCode,
-          totalItems: 1,
+          billingPhone: billingPhone ?? "",
+          address: address ?? "",
+          city: city ?? "",
+          postalCode: postalCode ?? "",
           subtotal: price,
+          totalItems: 1,
+          invoiceHtml,
           orderItems: {
-            create: [
-              {
-                name: `${credits} Mockups Bundle`,
-                quantity: 1,
-                size: `${credits} Credits`,
-                totalPrice: price,
-                retailPrice: price,
-                costPrice: price,
-                discountedRetailPrice: price,
-                totalCostPrice: price,
-              },
-            ],
-          },
-          licenseCertificates: {
-            create: [
-              {
-                userId,
-                licenseType: "Commercial License",
-                licenseText: `You purchased ${credits} credits with bundle #${bundleId}`,
-              },
-            ],
+            create: [orderItem],
           },
         },
-        include: { orderItems: true }, // We need this to render the invoice
+
+        include: { orderItems: true },
       });
 
-      // Update user credits
+      // 2. Create License Certificate, connect user & bundleOrder relations explicitly
+      await tx.licenseCertificate.create({
+        data: {
+          user: { connect: { id: userId } },
+          bundleOrder: { connect: { id: newBundleOrder.id } },
+          licenseType: "Commercial License",
+          licenseText: `You purchased ${credits} credits with bundle #${bundleId}`,
+        },
+      });
+
+      // 3. Update User Credits
       await tx.user.update({
         where: { id: userId },
-        data: { credits: { increment: credits } },
+        data: {
+          credits: {
+            increment: credits,
+          },
+        },
       });
 
-      // Generate invoice HTML
-    
-
-      return res.status(200).json(jsonResponse(true, "Bundle order placed", {
-        ...newBundleOrder,
-        invoiceHtml,
-      }));
+      return res.status(200).json(
+        jsonResponse(true, "Bundle order placed successfully", {
+          ...newBundleOrder,
+          invoiceHtml,
+        })
+      );
     });
   } catch (error) {
-    console.log(error);
+    console.error("❌ Bundle Order Error:", error);
     return res.status(500).json(jsonResponse(false, error.message, null));
   }
 };
-
-
-
-
-
 
 // export const createBundleOrder = async (req, res) => {
 //   const {
@@ -1584,7 +1620,7 @@ export const getBundleOrdersByUser = async (req, res) => {
   try {
     const orders = await prisma.bundleOrder.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return res.status(200).json({
@@ -1600,8 +1636,6 @@ export const getBundleOrdersByUser = async (req, res) => {
   }
 };
 
-
-;
 export const getSingleBundleOrder = async (req, res) => {
   const { id } = req.params;
   const userId = req.user?.id || req.userId;
@@ -1632,7 +1666,8 @@ export const getSingleBundleOrder = async (req, res) => {
       message: "Order fetched successfully",
       data: {
         id: order.id,
-        invoiceNumber: order.invoiceNumber || order.id.slice(0, 8).toUpperCase(),
+        invoiceNumber:
+          order.invoiceNumber || order.id.slice(0, 8).toUpperCase(),
         date: order.createdAt,
         total: order.subtotal,
         invoiceHtml: order.invoiceHtml || null, // ✅ this line must not be missing
@@ -1647,13 +1682,7 @@ export const getSingleBundleOrder = async (req, res) => {
   }
 };
 
-
-
-
-
-
 // ✅ Paddle Checkout V2 Integration
-
 
 export const createOrderPaddle = async (req, res) => {
   const {
@@ -1692,7 +1721,9 @@ export const createOrderPaddle = async (req, res) => {
 
       if (!product || !attribute) {
         console.log("❌ Invalid product or attribute");
-        return res.status(404).json({ success: false, message: "Invalid product" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Invalid product" });
       }
 
       const totalPrice = item.quantity * attribute.discountedRetailPrice;
@@ -1714,22 +1745,32 @@ export const createOrderPaddle = async (req, res) => {
     }
   } else {
     console.log("❌ No items provided in order");
-    return res.status(400).json({ success: false, message: "No items in order" });
+    return res
+      .status(400)
+      .json({ success: false, message: "No items in order" });
   }
 
   let coupon = null;
   if (couponId) {
-    coupon = await prisma.coupon.findFirst({ where: { id: couponId, isActive: true } });
+    coupon = await prisma.coupon.findFirst({
+      where: { id: couponId, isActive: true },
+    });
     if (coupon) {
-      console.log("✅ Coupon applied:", coupon.code, "-", coupon.discountAmount);
+      console.log(
+        "✅ Coupon applied:",
+        coupon.code,
+        "-",
+        coupon.discountAmount
+      );
     }
   }
 
-  const totalAmount = subtotal + (deliveryChargeInside || 0) - (coupon?.discountAmount || 0);
+  const totalAmount =
+    subtotal + (deliveryChargeInside || 0) - (coupon?.discountAmount || 0);
 
   // ✅ Paddle V2 API
   const API_KEY = process.env.PADDLE_API_KEY; // apikey_xxxxx
-  const PADDLE_API_URL = 'https://api.paddle.com/checkout/sessions';
+  const PADDLE_API_URL = "https://api.paddle.com/checkout/sessions";
 
   try {
     const paddleRes = await axios.post(
@@ -1748,12 +1789,11 @@ export const createOrderPaddle = async (req, res) => {
         },
         success_url: `http://localhost:3000/success`,
         cancel_url: `http://localhost:3000/cancel`,
-
       },
       {
         headers: {
           Authorization: `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
@@ -1784,8 +1824,6 @@ export const createOrderPaddle = async (req, res) => {
   }
 };
 
-
-
 export const handlePaddleWebhook = async (req, res) => {
   try {
     const event = req.body;
@@ -1797,16 +1835,16 @@ export const handlePaddleWebhook = async (req, res) => {
     const userId = customData.userId;
     const invoiceNumber = customData.invoiceNumber;
 
-    if (eventType === 'payment_succeeded') {
+    if (eventType === "payment_succeeded") {
       // ✅ Update order status in DB
       await prisma.order.updateMany({
         where: {
           userId,
           invoiceNumber,
-          status: 'pending',
+          status: "pending",
         },
         data: {
-          status: 'paid',
+          status: "paid",
           paymentReference: event.data.id,
         },
       });
@@ -1814,11 +1852,9 @@ export const handlePaddleWebhook = async (req, res) => {
       console.log("✅ Order marked as paid for:", invoiceNumber);
     }
 
-    res.status(200).send('Webhook received');
+    res.status(200).send("Webhook received");
   } catch (err) {
     console.error("❌ Paddle Webhook Error:", err);
-    res.status(500).send('Webhook processing failed');
+    res.status(500).send("Webhook processing failed");
   }
 };
-
-
