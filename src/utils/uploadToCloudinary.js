@@ -2,86 +2,75 @@ import { v2 as cloudinary } from "cloudinary";
 import { extname } from "path";
 import sharp from "sharp";
 import { Readable } from "stream";
-import dotenv from "dotenv";
 
-dotenv.config();  // Load env variables
-
-// Configure Cloudinary once globally
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-/**
- * Upload single or multiple images to Cloudinary, after converting to webp.
- * @param {Object|Array} file - single file object or array of files with buffer & originalname.
- * @param {string} folder - Cloudinary folder to upload to.
- * @returns {Promise<string|string[]>} - Returns URL string or array of URLs.
- */
-const uploadToCLoudinary = async (file, folder) => {
+const uploadToCLoudinary = async (files, folder, callBack) => {
   try {
-    // Normalize to array
-    const files = Array.isArray(file) ? file : [file];
+    let filesLength = 1;
+    let images = "";
 
-    if (files.length > 5) {
-      throw new Error("You cannot upload more than 5 pictures");
+    if (Array.isArray(files)) {
+      images = [];
+      filesLength = files.length;
+    } else {
+      images = "";
     }
 
-    const uploadResults = [];
-
-    for (const file of files) {
-      if (!file || !file.buffer) {
-        throw new Error("File or file buffer is undefined");
-      }
-
-      const fileExtension = extname(file.originalname).toLowerCase();
-      const validExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-
-      if (!validExtensions.includes(fileExtension)) {
-        throw new Error("Please select jpg/jpeg/png/webp image");
-      }
-
-      // Process image buffer with sharp to webp format
-      const processedImage = await sharp(file.buffer)
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      // Upload to Cloudinary using upload_stream with folder and resource_type:image
-      const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder,
-            resource_type: "image",
-          },
-          (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }
-        );
-
-        // Pipe processed image buffer into the upload stream
-        Readable.from(processedImage).pipe(uploadStream);
-      });
-
-      // Log full result for debugging
-      console.log("Cloudinary upload result:", result);
-
-      if (!result?.secure_url) {
-        throw new Error("Cloudinary upload failed - no URL returned");
-      }
-
-      uploadResults.push(result.secure_url);
+    //max 3 images
+    if (filesLength > 4) {
+      console.log("You cannot upload more than 4 pictures");
+      return false;
     }
 
-    // Return single URL if one file, or array of URLs if multiple
-    return Array.isArray(file) ? uploadResults : uploadResults[0];
+    for (let i = 0; i < filesLength; i++) {
+      let file;
+
+      if (Array.isArray(files)) {
+        file = files[i];
+      } else {
+        file = files;
+      }
+
+      if (file === undefined) {
+        return false;
+      }
+
+      let filename = file.originalname;
+      let fileUniqueName = file.filename;
+      let destination = file.destination;
+      let path = file.path;
+      let file_extension = extname(filename);
+
+      if (
+        file_extension.toLowerCase() === ".jpg" ||
+        file_extension.toLowerCase() === ".png" ||
+        file_extension.toLowerCase() === ".jpeg" ||
+        file_extension.toLowerCase() === ".JPG" ||
+        file_extension.toLowerCase() === ".JPEG" ||
+        file_extension.toLowerCase() === ".PNG" ||
+        file_extension.toLowerCase() === ".webp"
+      ) {
+        const bufferToStream = (buffer) => {
+          const readable = new Readable({
+            read() {
+              this.push(buffer);
+              this.push(null);
+            },
+          });
+          return readable;
+        };
+
+        const data = await sharp(file.buffer).webp({ quality: 80 }).toBuffer();
+        const stream = cloudinary.uploader.upload_stream({ folder }, callBack);
+
+        const bufferImage = bufferToStream(data).pipe(stream);
+      } else {
+        console.log("Please select jpg/jpeg/png image");
+        return false;
+      }
+    }
   } catch (error) {
-    console.error("Cloudinary upload error:", error.message);
-    throw error; // propagate error
+    console.log(error);
+    return false;
   }
 };
 
