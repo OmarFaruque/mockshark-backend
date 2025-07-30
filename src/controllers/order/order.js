@@ -160,13 +160,13 @@ export const createOrder = async (req, res) => {
           //calculate subtotal and subtotal cost price
           // subtotal = subtotal + discountedRetailPrice;
           // subtotal = subtotal + orderItems[i]?.totalPrice;
-          subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
-          const itemTotal =
-            orderItems[i].quantity * productAttribute.discountedRetailPrice;
-          const itemCost = orderItems[i].quantity * productAttribute.costPrice;
+          // subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
+         const itemTotal = orderItems[i].quantity * productAttribute.discountedRetailPrice;
+const itemCost = orderItems[i].quantity * productAttribute.costPrice;
 
-          subtotal += itemTotal;
-          subtotalCost += itemCost;
+subtotal += itemTotal;
+subtotalCost += itemCost;
+
 
           // subtotalCost =
           //   subtotalCost + orderItems[i].quantity * productAttribute.costPrice;
@@ -220,13 +220,13 @@ export const createOrder = async (req, res) => {
               <td style="border: 1px solid #ccc; padding: 8px;">${
                 orderItm.name
               } (${orderItm.size})</td>
-              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.discountedRetailPrice.toFixed(
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.costPrice.toFixed(
                 2
               )} $</td>
               <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${
                 orderItm.quantity
               }</td>
-              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalPrice.toFixed(
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalCostPrice.toFixed(
                 2
               )} $</td>
             </tr>
@@ -241,7 +241,7 @@ export const createOrder = async (req, res) => {
         </tr>
         <tr>
           <td colspan="3" style="text-align: right; padding: 8px;"><strong>Subtotal:</strong></td>
-          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotal.toFixed(
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotalCost.toFixed(
             2
           )} $</strong></td>
         </tr>
@@ -581,7 +581,13 @@ Support: support@mockshark.com
             newOrder
           )
         );
-    });
+    },
+   {
+  maxWait: 10000,         // optional
+  timeout: 15000          // increase timeout to 15 seconds
+}
+  
+  );
   } catch (error) {
     console.log(error);
     return res.status(500).json(jsonResponse(false, error, null));
