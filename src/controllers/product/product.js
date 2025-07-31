@@ -1144,13 +1144,13 @@ export const getProductsForCustomer = async (req, res) => {
       orderBy: {
         createdAt: "desc",
       },
-      skip:
-        req.query.limit && req.query.page
-          ? parseInt(req.query.limit * (req.query.page - 1))
-          : parseInt(defaultLimit() * (defaultPage() - 1)),
-      take: req.query.limit
-        ? parseInt(req.query.limit)
-        : parseInt(defaultLimit()),
+      // skip:
+      //   req.query.limit && req.query.page
+      //     ? parseInt(req.query.limit * (req.query.page - 1))
+      //     : parseInt(defaultLimit() * (defaultPage() - 1)),
+      // take: req.query.limit
+      //   ? parseInt(req.query.limit)
+      //   : parseInt(defaultLimit()),
     });
 
     if (products.length === 0)
