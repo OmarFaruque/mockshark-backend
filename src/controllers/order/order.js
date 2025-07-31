@@ -1621,11 +1621,11 @@ export const createBundleOrder = async (req, res) => {
 
 // controllers/bundleOrderController.js
 export const getBundleOrdersByUser = async (req, res) => {
-  const { userId } = req.params;
+  const { id } = req.params; 
 
   try {
     const orders = await prisma.bundleOrder.findMany({
-      where: { userId },
+       where: { userId: id },
       orderBy: { createdAt: "desc" },
     });
 
