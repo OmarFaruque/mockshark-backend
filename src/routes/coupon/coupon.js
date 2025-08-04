@@ -16,8 +16,8 @@ import verify from "../../utils/verifyToken.js";
 
 const router = express.Router();
 
-router.post("/v1/coupons", verify, createCoupon);
-router.get("/v1/coupons", verify, getCoupons);
+router.post("/v1/coupons",  createCoupon);
+router.get("/v1/coupons",  getCoupons);
 router.get("/v1/coupons/:id", verify, getCoupon);
 router.put("/v1/coupons/:id", verify, updateCoupon);
 router.delete("/v1/coupons/:id", verify, deleteCoupon);

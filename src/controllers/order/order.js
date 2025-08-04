@@ -19,172 +19,178 @@ const is_live = false; //true for live, false for sandbox
 //create order
 export const createOrder = async (req, res) => {
   try {
-    return await prisma.$transaction(async (tx) => {
-      const {
-        userId,
-        couponId,
-        // customerName,
-        // customerPhone,
-        // customerAddress,
-        // customerBillingAddress,
-        // customerEmail,
-        // customerCity,
-        // customerPostalCode,
-        invoiceNumber,
-        // paymentMethod,
-        // deliveryChargeInside,
-        // deliveryChargeOutside,
-        // // totalItems,
-        // // subtotalCost,
-        // // subtotal,
-        billingFirstName,
-        billingLastName,
-        billingCompany,
-        billingCountry,
-        billingEmail,
-        billingPhone,
-        address,
-        apartment,
-        city,
-        state,
-        postalCode,
-        orderItems,
-      } = req.body;
-
-      //validate input
-      const inputValidation = validateInput(
-        [
+    return await prisma.$transaction(
+      async (tx) => {
+        const {
+          userId,
+          couponId,
           // customerName,
           // customerPhone,
           // customerAddress,
           // customerBillingAddress,
           // customerEmail,
           // customerCity,
-          // invoiceNumber,
+          // customerPostalCode,
+          invoiceNumber,
           // paymentMethod,
+          // deliveryChargeInside,
+          // deliveryChargeOutside,
+          // // totalItems,
+          // // subtotalCost,
+          // // subtotal,
           billingFirstName,
           billingLastName,
-          // billingCompany,
-          // billingCountry,
+          billingCompany,
+          billingCountry,
           billingEmail,
-          // billingPhone ,
-          // address,
-          // apartment,
-          // city,
-          // state,
-          // postalCode,
-        ],
-        [
-          // "Name",
-          // "Phone",
-          // "Shipping Address",
-          // "Billing Address",
-          // "Email",
-          // "City",
-          // "Invoice",
-          // "Payment Method",
-          "Billing First Name",
-          "Billing Last Name",
-          // "Billing Company",
-          // "Billing Country",
-          "Billing Email",
-          // "Billing Phone",
-          // "Address",
-          // "Apartment",
-          // "City",
-          // "State",
-          // "Postal Code",
-        ]
-      );
+          billingPhone,
+          address,
+          apartment,
+          city,
+          state,
+          postalCode,
+          orderItems,
+          subtotalCost,
+        } = req.body;
 
-      if (inputValidation) {
-        return res.status(400).json(jsonResponse(false, inputValidation, null));
-      }
+        //validate input
+        const inputValidation = validateInput(
+          [
+            // customerName,
+            // customerPhone,
+            // customerAddress,
+            // customerBillingAddress,
+            // customerEmail,
+            // customerCity,
+            // invoiceNumber,
+            // paymentMethod,
+            billingFirstName,
+            billingLastName,
+            // billingCompany,
+            // billingCountry,
+            billingEmail,
+            // billingPhone ,
+            // address,
+            // apartment,
+            // city,
+            // state,
+            // postalCode,
+          ],
+          [
+            // "Name",
+            // "Phone",
+            // "Shipping Address",
+            // "Billing Address",
+            // "Email",
+            // "City",
+            // "Invoice",
+            // "Payment Method",
+            "Billing First Name",
+            "Billing Last Name",
+            // "Billing Company",
+            // "Billing Country",
+            "Billing Email",
+            // "Billing Phone",
+            // "Address",
+            // "Apartment",
+            // "City",
+            // "State",
+            // "Postal Code",
+          ]
+        );
 
-      // console.log("SSL");
-
-      //count total items and subtotal price for order and get name,size,prices info
-      let totalNumberOfItems = 0;
-      let subtotal = 0;
-      let subtotalCost = 0;
-      let newOrderItems = [];
-      let allProductNames = "";
-
-      if (orderItems && orderItems.length > 0) {
-        const orderItemLength = orderItems.length;
-        for (let i = 0; i < orderItemLength; i++) {
-          //get product and product attribute for getting prices,name,size info
-          const product = await tx.product.findFirst({
-            where: {
-              id: orderItems[i].productId,
-              isDeleted: false,
-              isActive: true,
-            },
-          });
-          const productAttribute = await tx.productAttribute.findFirst({
-            where: { id: orderItems[i].productAttributeId, isDeleted: false },
-          });
-
-          if (!product && !productAttribute) {
-            return res
-              .status(409)
-              .json(jsonResponse(false, "Product does not exist", null));
-          }
-
-          newOrderItems.push({
-            ...orderItems[i],
-            name: product.name,
-            size: productAttribute.size,
-            costPrice: productAttribute.costPrice,
-            retailPrice: productAttribute.retailPrice,
-            discountPercent: productAttribute.discountPercent,
-            discountPrice: productAttribute.discountPrice,
-            discountedRetailPrice: productAttribute.discountedRetailPrice,
-            totalCostPrice: orderItems[i].quantity * productAttribute.costPrice,
-            totalPrice:
-              orderItems[i].quantity * productAttribute.discountedRetailPrice,
-            quantity: orderItems[i].quantity,
-          });
-
-          //calculate total number of items
-          totalNumberOfItems = totalNumberOfItems + orderItems[i].quantity;
-
-          //calculate discount prices
-          let discountPrice =
-            productAttribute.retailPrice *
-            (productAttribute.discountPercent / 100);
-          let discountedRetailPrice =
-            (productAttribute.retailPrice - discountPrice) *
-            orderItems[i].quantity;
-
-          //calculate subtotal and subtotal cost price
-          // subtotal = subtotal + discountedRetailPrice;
-          // subtotal = subtotal + orderItems[i]?.totalPrice;
-          // subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
-         const itemTotal = orderItems[i].quantity * productAttribute.discountedRetailPrice;
-const itemCost = orderItems[i].quantity * productAttribute.costPrice;
-
-subtotal += itemTotal;
-subtotalCost += itemCost;
-
-
-          // subtotalCost =
-          //   subtotalCost + orderItems[i].quantity * productAttribute.costPrice;
-
-          allProductNames = allProductNames + ", " + orderItems[i]?.name;
+        if (inputValidation) {
+          return res
+            .status(400)
+            .json(jsonResponse(false, inputValidation, null));
         }
-      } else {
-        return res
-          .status(404)
-          .json(jsonResponse(false, "Please select at least 1 item", null));
-      }
 
-      //get coupon
-      let coupon = await tx.coupon.findFirst({
-        where: { id: couponId, isActive: true },
-      });
+        // console.log("SSL");
 
-      const invoiceHtml = `
+        //count total items and subtotal price for order and get name,size,prices info
+        let totalNumberOfItems = 0;
+        let subtotal = 0;
+        // let subtotalCost = 0;
+        let newOrderItems = [];
+        let allProductNames = "";
+
+        if (orderItems && orderItems.length > 0) {
+          const orderItemLength = orderItems.length;
+          for (let i = 0; i < orderItemLength; i++) {
+            //get product and product attribute for getting prices,name,size info
+            const product = await tx.product.findFirst({
+              where: {
+                id: orderItems[i].productId,
+                isDeleted: false,
+                isActive: true,
+              },
+            });
+            const productAttribute = await tx.productAttribute.findFirst({
+              where: { id: orderItems[i].productAttributeId, isDeleted: false },
+            });
+
+            if (!product && !productAttribute) {
+              return res
+                .status(409)
+                .json(jsonResponse(false, "Product does not exist", null));
+            }
+
+            newOrderItems.push({
+              ...orderItems[i],
+              name: product.name,
+              size: productAttribute.size,
+              costPrice: productAttribute.costPrice,
+              retailPrice: productAttribute.retailPrice,
+              discountPercent: productAttribute.discountPercent,
+              discountPrice: productAttribute.discountPrice,
+              discountedRetailPrice: productAttribute.discountedRetailPrice,
+              totalCostPrice:
+                orderItems[i].quantity * productAttribute.costPrice,
+              totalPrice:
+                orderItems[i].quantity * productAttribute.discountedRetailPrice,
+              quantity: orderItems[i].quantity,
+            });
+
+            //calculate total number of items
+            totalNumberOfItems = totalNumberOfItems + orderItems[i].quantity;
+
+            //calculate discount prices
+            let discountPrice =
+              productAttribute.retailPrice *
+              (productAttribute.discountPercent / 100);
+            let discountedRetailPrice =
+              (productAttribute.retailPrice - discountPrice) *
+              orderItems[i].quantity;
+
+            //calculate subtotal and subtotal cost price
+            // subtotal = subtotal + discountedRetailPrice;
+            // subtotal = subtotal + orderItems[i]?.totalPrice;
+            // subtotalCost = subtotalCost + orderItems[i]?.totalCostPrice;
+            // const itemTotal =
+            //   orderItems[i].quantity * productAttribute.discountedRetailPrice;
+            // const itemCost =
+            //   orderItems[i].quantity * productAttribute.costPrice;
+
+            // subtotal += itemTotal;
+            // subtotalCost += itemCost;
+
+            // subtotalCost =
+            //   subtotalCost + orderItems[i].quantity * productAttribute.costPrice;
+
+            allProductNames = allProductNames + ", " + orderItems[i]?.name;
+          }
+        } else {
+          return res
+            .status(404)
+            .json(jsonResponse(false, "Please select at least 1 item", null));
+        }
+
+        //get coupon
+        let coupon = await tx.coupon.findFirst({
+          where: { id: couponId, isActive: true },
+        });
+
+        const invoiceHtml = `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd;">
     <h2 style="text-align: center; color: #192533;">🧾 Invoice</h2>
     
@@ -252,102 +258,101 @@ subtotalCost += itemCost;
   </div>
 `;
 
-      //create order
-      let newOrder = await tx.order.create({
-        data: {
-          user: {
-            connect: { id: userId },
+        //create order
+        let newOrder = await tx.order.create({
+          data: {
+            user: {
+              connect: { id: userId },
+            },
+            couponId, // ensure this variable is defined or null
+            invoiceNumber, // ensure this variable is defined or null
+            billingFirstName,
+            billingLastName,
+            billingCompany,
+            billingCountry,
+            billingEmail,
+            billingPhone,
+            address,
+            apartment,
+            city,
+            state,
+            postalCode,
+            invoiceHtml,
+            totalItems: totalNumberOfItems,
+            subtotalCost: subtotalCost,
+            subtotal: subtotal,
+            orderItems: {
+              create: orderItems.map((item) => ({
+                name: item.name,
+                size: item.size,
+                costPrice: item.costPrice,
+                retailPrice: item.retailPrice,
+                discountedRetailPrice:
+                  item.discountedRetailPrice || item.retailPrice,
+                quantity: item.quantity,
+                totalCostPrice: item.costPrice * item.quantity,
+                totalPrice: item.retailPrice * item.quantity,
+                product: {
+                  connect: { id: item.productId },
+                },
+                productAttribute: {
+                  connect: { id: item.productAttributeId },
+                },
+              })),
+            },
           },
-          couponId, // ensure this variable is defined or null
-          invoiceNumber, // ensure this variable is defined or null
-          billingFirstName,
-          billingLastName,
-          billingCompany,
-          billingCountry,
-          billingEmail,
-          billingPhone,
-          address,
-          apartment,
-          city,
-          state,
-          postalCode,
-          invoiceHtml,
-          totalItems: totalNumberOfItems,
-          subtotalCost: subtotalCost,
-          subtotal: subtotal,
-          orderItems: {
-            create: orderItems.map((item) => ({
-              name: item.name,
-              size: item.size,
-              costPrice: item.costPrice,
-              retailPrice: item.retailPrice,
-              discountedRetailPrice:
-                item.discountedRetailPrice || item.retailPrice,
-              quantity: item.quantity,
-              totalCostPrice: item.costPrice * item.quantity,
-              totalPrice: item.retailPrice * item.quantity,
-              product: {
-                connect: { id: item.productId },
-              },
-              productAttribute: {
-                connect: { id: item.productAttributeId },
-              },
-            })),
-          },
-        },
-      });
+        });
 
-      //bundle order er jonno license certificate create korar code ekhane add korbe
-      // const user = await tx.user.findUnique({
-      //   where: { id: userId },
-      //   select: {
-      //     credits: true,
-      //     creditsUsed: true,
-      //   },
-      // });
+        // const user = await tx.user.findUnique({
+        //   where: { id: userId },
+        //   select: {
+        //     credits: true,
+        //     creditsUsed: true,
+        //   },
+        // });
 
-      // if (!user || (user.credits ?? 0) <= (user.creditsUsed ?? 0)) {
-      //   return res.status(400).json({ error: "No available credits" });
-      // }
+        // if (!user || (user.credits ?? 0) <= (user.creditsUsed ?? 0)) {
+        //   return res.status(400).json({ error: "No available credits" });
+        // }
 
-      // // Update creditsUsed
-      // await tx.user.update({
-      //   where: { id: userId },
-      //   data: {
-      //     creditsUsed: { increment: 1 },
-      //     credits: { decrement: 1 }, // Decrement credits by 1
-      //   },
-      // });
+        // // Update creditsUsed
+        // await tx.user.update({
+        //   where: { id: userId },
+        //   data: {
+        //     creditsUsed: { increment: 1 },
+        //     credits: { decrement: 1 }, // Decrement credits by 1
+        //   },
+        // });
 
-      // =====================
-      // License certificate ar download url create korar code ekhane add korbe
-      // =====================
+        // =====================
+        // License certificate ar download url create korar code ekhane add korbe
+        // =====================
 
-      // Filter bundle orders (e.g., productId like "bundle-10")
-      // const bundleItems = newOrderItems.filter(item =>
-      //   item.productId.startsWith("bundle-")
-      // );
+        // Filter bundle orders (e.g., productId like "bundle-10")
+        // const bundleItems = newOrderItems.filter(item =>
+        //   item.productId.startsWith("bundle-")
+        // );
 
-      // // Add credits for each bundle
-      // for (const bundle of bundleItems) {
-      //   const creditsToAdd = parseInt(bundle.licenseType); // "10" from "10 Mockups"
-      //   if (!isNaN(creditsToAdd)) {
-      //     await tx.user.update({
-      //       where: { id: userId },
-      //       data: {
-      //         credits: { increment: creditsToAdd }
-      //       }
-      //     });
-      //   }
-      // }
+        // // Add credits for each bundle
+        // for (const bundle of bundleItems) {
+        //   const creditsToAdd = parseInt(bundle.licenseType); // "10" from "10 Mockups"
+        //   if (!isNaN(creditsToAdd)) {
+        //     await tx.user.update({
+        //       where: { id: userId },
+        //       data: {
+        //         credits: { increment: creditsToAdd }
+        //       }
+        //     });
+        //   }
+        // }
 
-      const licenseTexts = {
-        "Personal Use License": (
-          buyerName,
-          orderNumber,
-          date,
-          productTitle
-        ) => `
+        const licenseTexts = {
+          "Personal Use License": (
+            buyerName,
+            orderNumber,
+            date,
+            productTitle
+          ) => `
 MockShark License Certificate
 
 License Type: Personal Use License
@@ -367,7 +372,12 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-        "Commercial License": (buyerName, orderNumber, date, productTitle) => `
+          "Commercial License": (
+            buyerName,
+            orderNumber,
+            date,
+            productTitle
+          ) => `
 MockShark License Certificate
 
 License Type: Commercial License
@@ -386,12 +396,12 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-        "Extended Commercial License": (
-          buyerName,
-          orderNumber,
-          date,
-          productTitle
-        ) => `
+          "Extended Commercial License": (
+            buyerName,
+            orderNumber,
+            date,
+            productTitle
+          ) => `
 MockShark License Certificate
 
 License Type: Extended Commercial License
@@ -410,106 +420,106 @@ Issued by: MockShark.com
 Support: support@mockshark.com
 `,
 
-        // Extra aliases (frontend jodi Commercial/Extended Commercial dei)
-        Commercial: (...args) => licenseTexts["Commercial License"](...args),
-        "Extended Commercial": (...args) =>
-          licenseTexts["Extended Commercial License"](...args),
-      };
+          // Extra aliases (frontend jodi Commercial/Extended Commercial dei)
+          Commercial: (...args) => licenseTexts["Commercial License"](...args),
+          "Extended Commercial": (...args) =>
+            licenseTexts["Extended Commercial License"](...args),
+        };
 
-      // newOrderItems er moddhe jodi licenseType thake taile seta nibe, na hole default "Personal Use License" dhore nibe
-      for (const item of newOrderItems) {
-        const licenseType = item.licenseType || "Personal Use License";
-        const templateFn =
-          licenseTexts[licenseType] || licenseTexts["Personal Use License"];
-        const licenseText = templateFn(
-          billingFirstName + " " + billingLastName,
-          newOrder.invoiceNumber,
-          new Date().toLocaleDateString(),
-          item.name
-        );
+        // newOrderItems er moddhe jodi licenseType thake taile seta nibe, na hole default "Personal Use License" dhore nibe
+        for (const item of newOrderItems) {
+          const licenseType = item.licenseType || "Personal Use License";
+          const templateFn =
+            licenseTexts[licenseType] || licenseTexts["Personal Use License"];
+          const licenseText = templateFn(
+            billingFirstName + " " + billingLastName,
+            newOrder.invoiceNumber,
+            new Date().toLocaleDateString(),
+            item.name
+          );
 
-        // LicenseCertificate record create koro
-        await tx.licenseCertificate.create({
-          data: {
-            userId,
-            orderId: newOrder.id,
-            productId: item.productId,
-            licenseType,
-            licenseText,
-          },
-        });
-
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-        });
-
-        if (product?.downloadUrl) {
-          await tx.downloadUrl.create({
+          // LicenseCertificate record create koro
+          await tx.licenseCertificate.create({
             data: {
               userId,
-              productId: item.productId,
               orderId: newOrder.id,
-              downloadUrl: product.downloadUrl,
+              productId: item.productId,
+              licenseType,
+              licenseText,
+            },
+          });
+
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+          });
+
+          if (product?.downloadUrl) {
+            await tx.downloadUrl.create({
+              data: {
+                userId,
+                productId: item.productId,
+                orderId: newOrder.id,
+                downloadUrl: product.downloadUrl,
+              },
+            });
+          }
+        }
+
+        if (!newOrder) {
+          return res
+            .status(200)
+            .json(jsonResponse(false, `Order cannot be placed`, null));
+        }
+        // for (let i = 0; i < newOrderItems.length; i++) {
+        //   const product = await tx.product.findFirst({
+        //     where: {
+        //       id: newOrderItems[i].productId,
+        //       isDeleted: false,
+        //       isActive: true,
+        //     },
+        //   });
+
+        //   if (!product?.downloadUrl) continue;
+
+        //   try {
+        //     await tx.downloadUrl.create({
+        //       data: {
+        //         userId,
+        //         productId: newOrderItems[i].productId,
+        //         orderId: newOrder.id,
+        //         downloadUrl: product.downloadUrl,
+        //       },
+        //     });
+        //     console.log("DownloadUrl created");
+        //   } catch (err) {
+        //     console.error("Failed to insert download url:", err);
+        //   }
+        // }
+
+        //reduce stock amount
+        for (let i = 0; i < orderItems.length; i++) {
+          await tx.productAttribute.update({
+            where: { id: orderItems[i].productAttributeId },
+            data: {
+              stockAmount: { decrement: orderItems[i].quantity },
             },
           });
         }
-      }
 
-      if (!newOrder) {
-        return res
-          .status(200)
-          .json(jsonResponse(false, `Order cannot be placed`, null));
-      }
-      // for (let i = 0; i < newOrderItems.length; i++) {
-      //   const product = await tx.product.findFirst({
-      //     where: {
-      //       id: newOrderItems[i].productId,
-      //       isDeleted: false,
-      //       isActive: true,
-      //     },
-      //   });
+        console.log("ORDER CHECK");
 
-      //   if (!product?.downloadUrl) continue;
+        // <tr>
+        //             <td></td>
+        //             <td></td>
+        //             <td><b>Discount: </b></td>
+        //             <td>${subtotal + deliveryChargeInside - subtotal} TK</td>
+        //           </tr>
 
-      //   try {
-      //     await tx.downloadUrl.create({
-      //       data: {
-      //         userId,
-      //         productId: newOrderItems[i].productId,
-      //         orderId: newOrder.id,
-      //         downloadUrl: product.downloadUrl,
-      //       },
-      //     });
-      //     console.log("DownloadUrl created");
-      //   } catch (err) {
-      //     console.error("Failed to insert download url:", err);
-      //   }
-      // }
-
-      //reduce stock amount
-      for (let i = 0; i < orderItems.length; i++) {
-        await tx.productAttribute.update({
-          where: { id: orderItems[i].productAttributeId },
-          data: {
-            stockAmount: { decrement: orderItems[i].quantity },
-          },
-        });
-      }
-
-      console.log("ORDER CHECK");
-
-      // <tr>
-      //             <td></td>
-      //             <td></td>
-      //             <td><b>Discount: </b></td>
-      //             <td>${subtotal + deliveryChargeInside - subtotal} TK</td>
-      //           </tr>
-
-      //send email invoice
-      const emailGenerate = await sendEmail(
-        billingEmail,
-        `Order Invoice `,
-        `<p>Dear ${billingFirstName},</p>
+        //send email invoice
+        const emailGenerate = await sendEmail(
+          billingEmail,
+          `Order Invoice `,
+          `<p>Dear ${billingFirstName},</p>
 
           <p>Your order has been placed successfully!</p>
 
@@ -532,62 +542,63 @@ Support: support@mockshark.com
                 <th>Total</th>
               </tr>
             </thead>
-            <tbody>
-             ${newOrderItems
-               ?.map(
-                 (orderItm) =>
-                   `<tr>
-      <td>${orderItm.name} (${orderItm.size})</td>
-      <td>${orderItm.discountedRetailPrice.toFixed(2)} $</td>
-      <td>${orderItm.quantity}</td>
-      <td>${orderItm.totalPrice.toFixed(2)} $</td>
-    </tr>`
-               )
-               .join("")}
-
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td><b>Coupon Discount: </b></td>
-                  <td>${coupon?.discountAmount ?? 0} $</td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td></td>
-                 
-                 
-                </tr>
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td><b>Subtotal: </b></td>
-                  <td><b>${subtotal} $</b></td>
-                 
-                </tr>
-            </tbody>
+             <tbody>
+        ${newOrderItems
+          ?.map(
+            (orderItm) => `
+            <tr>
+              <td style="border: 1px solid #ccc; padding: 8px;">${
+                orderItm.name
+              } (${orderItm.size})</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${orderItm.costPrice.toFixed(
+                2
+              )} $</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${
+                orderItm.quantity
+              }</td>
+              <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${orderItm.totalCostPrice.toFixed(
+                2
+              )} $</td>
+            </tr>
+          `
+          )
+          .join("")}
+        <tr>
+          <td colspan="3" style="text-align: right; padding: 8px;"><strong>Coupon Discount:</strong></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">${
+            coupon?.discountAmount ?? 0
+          } $</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="text-align: right; padding: 8px;"><strong>Subtotal:</strong></td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;"><strong>${subtotalCost.toFixed(
+            2
+          )} $</strong></td>
+        </tr>
+      </tbody>
+    </table>
           </table>
 
           <br/><br/>
           <p>Thank you for shopping. Your order status will be updated soon.</p>
         `
-      );
-
-      return res
-        .status(200)
-        .json(
-          jsonResponse(
-            true,
-            "Order has been placed successfully! We have sent an invoice to your mail. Thank you.",
-            newOrder
-          )
         );
-    },
-   {
-  maxWait: 10000,         // optional
-  timeout: 15000          // increase timeout to 15 seconds
-}
-  
-  );
+
+        return res
+          .status(200)
+          .json(
+            jsonResponse(
+              true,
+              "Order has been placed successfully! We have sent an invoice to your mail. Thank you.",
+              newOrder
+            )
+          );
+      },
+      {
+        maxWait: 10000, // optional
+        timeout: 15000, // increase timeout to 15 seconds
+      }
+    );
   } catch (error) {
     console.log(error);
     return res.status(500).json(jsonResponse(false, error, null));
@@ -1456,7 +1467,6 @@ Support: support@mockshark.com
   });
 };
 
-
 export const createBundleOrder = async (req, res) => {
   try {
     const {
@@ -1621,11 +1631,11 @@ export const createBundleOrder = async (req, res) => {
 
 // controllers/bundleOrderController.js
 export const getBundleOrdersByUser = async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
 
   try {
     const orders = await prisma.bundleOrder.findMany({
-       where: { userId: id },
+      where: { userId: id },
       orderBy: { createdAt: "desc" },
     });
 
