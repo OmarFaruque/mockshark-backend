@@ -1,6 +1,7 @@
 import { defaultLimit, defaultPage } from "../../utils/defaultData.js";
 import jsonResponse from "../../utils/jsonResponse.js";
 import prisma from "../../utils/prismaClient.js";
+import upldusercloudnary from "../../utils/upldusercloudnary.js";
 import uploadToCLoudinary from "../../utils/uploadToCloudinary.js";
 import validateInput from "../../utils/validateInput.js";
 
@@ -209,7 +210,7 @@ export const updateUser = async (req, res) => {
 
       // Upload to Cloudinary
       // Upload to Cloudinary
-      const result = await uploadToCLoudinary(req.file, "user_profiles");
+      const result = await upldusercloudnary(req.file, "user_profiles");
       console.log("Cloudinary upload result URL:", result);
 
       if (!result) {

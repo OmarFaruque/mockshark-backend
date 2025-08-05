@@ -2,12 +2,16 @@ import express from "express";
 import multer from "multer";
 import {
   banProduct,
+  createBlog,
   createProduct,
   createProductAttribute,
   createProductImage,
+  deleteBlog,
   deleteProduct,
   deleteProductAttribute,
   deleteProductImage,
+  getAllBlogs,
+  getBlogById,
   getFeaturedProductsForCustomer,
   getProduct,
   getProductAttributes,
@@ -19,6 +23,7 @@ import {
   getTrendingProductsForCustomer,
   increaseProductViewCount,
   sendProductEmail,
+  updateBlog,
   updateProduct,
   updateProductAttribute,
   updateProductImage,
@@ -99,5 +104,18 @@ router.get("/v1/customer/products", getProductsForCustomer);
 router.get("/v1/customer/products/:id", getProductForCustomer);
 router.get("/v1/customer/trending-products", getTrendingProductsForCustomer);
 router.get("/v1/customer/featured-products", getFeaturedProductsForCustomer);
+
+
+router.post("/v1/create-blog", upload.single('image'), createBlog);
+router.put("/v1/blogs/:id", upload.single("image"), updateBlog);
+router.delete("/v1/blogs/:id", deleteBlog);
+
+// Get All Blogs
+router.get("/v1/blogs", getAllBlogs);
+
+// Get Single Blog
+router.get("/v1/blogs/:id", getBlogById);
+
+
 
 export default router;

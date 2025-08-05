@@ -1776,3 +1776,207 @@ export const createProductImage = async (req, res) => {
     return res.status(500).json(jsonResponse(false, error, null));
   }
 };
+
+
+
+
+
+//Blog Api
+
+export const createBlog = async (req, res) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const { title, description } = req.body;
+
+      // Validate input
+      const inputValidation = validateInput(
+        [title, description],
+        ["Title", "Description"]
+      );
+
+      if (inputValidation) {
+        return res.status(400).json(jsonResponse(false, inputValidation, null));
+      }
+
+      if (!req.file) {
+        return res.status(400).json(jsonResponse(false, "Please upload an image", null));
+      }
+
+      const module_name = "blogs";
+
+      const uploadResult = await new Promise((resolve, reject) => {
+        uploadToCLoudinary([req.file], module_name, (error, result) => {
+          if (error) {
+            return reject(error);
+          }
+          resolve(result);
+        });
+      });
+
+      if (!uploadResult || !uploadResult.secure_url) {
+        return res.status(500).json(jsonResponse(false, "Image upload failed", null));
+      }
+
+      const blogImageUrl = uploadResult.secure_url;
+
+      const newBlog = await tx.blog.create({
+        data: {
+          title,
+          description,
+          image: blogImageUrl,
+        },
+      });
+
+      if (!newBlog) {
+        return res.status(500).json(jsonResponse(false, "Failed to create blog", null));
+      }
+
+      return res.status(201).json(jsonResponse(true, "Blog created successfully", newBlog));
+    });
+  } catch (error) {
+    console.error("POST /v1/blogs error:", error);
+    return res.status(500).json(jsonResponse(false, error.message, null));
+  }
+};
+
+
+
+
+
+export const updateBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+    let image;
+
+    // Check if new image file is uploaded
+    if (req.file) {
+      // If you have cloudinary upload function, upload here and get URL
+      const uploadResult = await new Promise((resolve, reject) => {
+        uploadToCLoudinary(req.file, "blogs", (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        });
+      });
+
+      if (!uploadResult || !uploadResult.secure_url) {
+        return res.status(500).json({
+          success: false,
+          message: "Image upload failed",
+        });
+      }
+      image = uploadResult.secure_url;
+    } else if (req.body.image) {
+      // If frontend sends existing image URL (optional)
+      image = req.body.image;
+    }
+
+    // Check at least one field is present to update
+    if (!title && !description && !image) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field (title, description, or image) must be provided",
+      });
+    }
+
+    const dataToUpdate = {};
+    if (title) dataToUpdate.title = title;
+    if (description) dataToUpdate.description = description;
+    if (image) dataToUpdate.image = image;
+
+    const updatedBlog = await prisma.blog.update({
+      where: { id: parseInt(id) },
+      data: dataToUpdate,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Blog updated successfully",
+      data: updatedBlog,
+    });
+  } catch (error) {
+    console.error("PUT /v1/blogs/:id error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update blog",
+      error: error.message,
+    });
+  }
+};
+
+
+
+// Delete blog
+export const deleteBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.blog.delete({
+      where: { id: parseInt(id) },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Blog deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE /v1/blogs/:id error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete blog",
+      error: error.message,
+    });
+  }
+};
+
+
+// Get all blogs
+export const getAllBlogs = async (req, res) => {
+  try {
+    const blogs = await prisma.blog.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: blogs,
+    });
+  } catch (error) {
+    console.error("GET /v1/blogs error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch blogs",
+      error: error.message,
+    });
+  }
+};
+
+// Get single blog
+export const getBlogById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const blog = await prisma.blog.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: blog,
+    });
+  } catch (error) {
+    console.error("GET /v1/blogs/:id error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch blog",
+      error: error.message,
+    });
+  }
+};
