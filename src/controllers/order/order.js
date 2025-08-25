@@ -580,7 +580,7 @@ Support: support@mockshark.com
           </table>
 
           <br/><br/>
-          <p>Thank you for shopping. Your order status will be updated soon.</p>
+          <p>Thank you for shopping. </p>
         `
         );
 
