@@ -12,11 +12,13 @@ const verify = (req, res, next) => {
 
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET, async (err, user) => {
-        if (err)
-          res
+        if (err){
+          return res
             .status(403)
             .json(jsonResponse(false, "Token is not valid!", null));
+        }
         req.user = user;
+        
 
         const activeUser = await prisma.user.findFirst({
           where: { id: req.user.id, isDeleted: false },

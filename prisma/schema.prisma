@@ -272,6 +272,8 @@ model Product {
   isDeleted        Boolean         @default(false)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  paddleProductId  String?
+  paddlePriceId    String?
   user             User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   category         Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   campaign         Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -304,6 +306,7 @@ model ProductAttribute {
   createdBy             String?
   updatedBy             String?
   deletedBy             String?
+  paddlePriceId         String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -655,6 +658,8 @@ model Bundle {
   regularPrice  Float?
   discountPrice Float?
   mockups       Int?
+  paddleProductId  String?
+  paddlePriceId    String?
   createdAt     DateTime @default(now())
 }
 
