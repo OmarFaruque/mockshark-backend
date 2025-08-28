@@ -9,6 +9,7 @@ import dashboardRoutes from "./dashboard/index.js";
 import newsletterRoutes from "./newsletter/index.js";
 import orderRoutes from "./order/index.js";
 import monthlyPaymentRoutes from "./payment/index.js";
+import paddleRoutes from "./paddle/index.js";
 import preorderRoutes from "./preorder/index.js";
 import productRoutes from "./product/index.js";
 import reviewRoutes from "./review/index.js";
@@ -34,6 +35,7 @@ const allRoutes = [
   ...reviewRoutes,
   ...newsletterRoutes,
   ...contactRoutes,
+  ...paddleRoutes,
 ];
 
 export default allRoutes;

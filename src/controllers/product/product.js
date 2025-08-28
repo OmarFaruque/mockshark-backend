@@ -34,9 +34,10 @@ export const createProduct = async (req, res) => {
         isTrending,
         isFeatured,
         isActive,
-
+        paddleProductId,
+        
       } = req.body;
-     console.log({ reqBody: req.body });
+
 
       //validate input
       const inputValidation = validateInput(
@@ -101,6 +102,7 @@ export const createProduct = async (req, res) => {
       //calculation for discount prices
       let newProductAttributes = [];
       const productAttributeLength = req.body.productAttributes.length;
+
       for (let j = 0; j < productAttributeLength; j++) {
         newProductAttributes.push({
           ...req.body.productAttributes[j],
@@ -117,9 +119,9 @@ export const createProduct = async (req, res) => {
             req.body.productAttributes[j].retailPrice -
             req.body.productAttributes[j].retailPrice *
               (req.body.productAttributes[j].discountPercent / 100),
+          paddlePriceId: req.body.productAttributes[j].paddlePriceId
         });
       }
-       console.log( newProductAttributes)
       //if there is no image selected
       if (!req.files || req.files.length === 0) {
         //create products
@@ -146,6 +148,7 @@ export const createProduct = async (req, res) => {
             isActive: isActive === "true" ? true : false,
             // createdBy: req.user.id,
             slug: `${slugify(req.body.name)}`,
+            paddleProductId,
             productAttributes: {
               create: newProductAttributes,
             },
@@ -174,41 +177,42 @@ export const createProduct = async (req, res) => {
       // const imageUpload = await uploadImage(req.files);
 
       const newImages = [];
-      console.log(req.files ,module_name)
-      console.log(
+      // console.log(req.files ,module_name)
+  //     console.log(
 
-  {
-                // userId: req.user.parentId ? req.user.parentId : req.user.id,
-                brandId: brandId,
-                categoryId: categoryId,
-                subcategoryId: subcategoryId,
-                subsubcategoryId: subsubcategoryId,
-                campaignId: campaignId,
-                supplierId: supplierId,
-                productCode: productCode,
-                barcode: barcode,
-                sku: sku,
-                name: name,
-                shortDescription: shortDescription,
-                longDescription: longDescription,
-                resolution: resolution,
-                fileSize: fileSize,
-                downloadUrl : downloadUrl,
-                isTrending: isTrending === "true" ? true : false,
-                isFeatured: isFeatured === "true" ? true : false,
-                isActive: isActive === "true" ? true : false,
-                // createdBy: req.user.id,
-                slug: `${slugify(req.body.name)}`,
-                productAttributes: {
-                  newProductAttributes,
-                },
-                images: {
-                  newImages,
-                },
-              },
+  // {
+  //               // userId: req.user.parentId ? req.user.parentId : req.user.id,
+  //               brandId: brandId,
+  //               categoryId: categoryId,
+  //               subcategoryId: subcategoryId,
+  //               subsubcategoryId: subsubcategoryId,
+  //               campaignId: campaignId,
+  //               supplierId: supplierId,
+  //               productCode: productCode,
+  //               barcode: barcode,
+  //               sku: sku,
+  //               name: name,
+  //               shortDescription: shortDescription,
+  //               longDescription: longDescription,
+  //               resolution: resolution,
+  //               fileSize: fileSize,
+  //               downloadUrl : downloadUrl,
+  //               isTrending: isTrending === "true" ? true : false,
+  //               isFeatured: isFeatured === "true" ? true : false,
+  //               isActive: isActive === "true" ? true : false,
+  //               paddleProductId: paddleProductId,
+  //               // createdBy: req.user.id,
+  //               slug: `${slugify(req.body.name)}`,
+  //               productAttributes: {
+  //                 newProductAttributes,
+  //               },
+  //               images: {
+  //                 newImages,
+  //               },
+  //             },
 
 
-      )
+  //     )
       await uploadToCLoudinary(
         req.files,
         module_name,
@@ -217,9 +221,9 @@ export const createProduct = async (req, res) => {
             console.error("error", error);
             return res.status(404).json(jsonResponse(false, error, null));
           }
-        console.log("result", result.secure_url)
+        // console.log("result", result.secure_url)
           newImages.push({ image: result.secure_url });
-        console.log(newImages)
+        // console.log(newImages)
           if (!result.secure_url) {
             return res
               .status(404)
@@ -231,11 +235,11 @@ export const createProduct = async (req, res) => {
                 )
               );
           }
-          console.log(req.files)
+          // console.log(req.files)
           
           if (req.files.length === newImages.length) {
             //create products
-            console.log({ newImages });
+            // console.log({ newImages });
             let newProduct = await prisma.product.create({
               data: {
                 // userId: req.user.parentId ? req.user.parentId : req.user.id,
@@ -259,6 +263,7 @@ export const createProduct = async (req, res) => {
                 isActive: isActive === "true" ? true : false,
                 // createdBy: req.user.id,
                 slug: `${slugify(req.body.name)}`,
+                paddleProductId,
                 productAttributes: {
                   create: newProductAttributes,
                 },
@@ -267,7 +272,7 @@ export const createProduct = async (req, res) => {
                 },
               },
             });
-console.log({ newProduct });
+// console.log({ newProduct });
             if (!newProduct) {
               return res
                 .status(200)
@@ -339,7 +344,6 @@ export const sendProductEmail = async (req, res) => {
         where: { isActive: true },
       });
 
-      console.log({ emailList });
 
       if (emailList) {
         for (let i = 0; i < emailList?.length; i++) {
@@ -587,6 +591,8 @@ export const updateProduct = async (req, res) => {
         isTrending,
         isFeatured,
         isActive,
+        paddleProductId,
+        paddlePriceId,
       } = req.body;
 
       //validate input
@@ -650,7 +656,6 @@ export const updateProduct = async (req, res) => {
       const product = await tx.product.update({
         where: { id: req.params.id },
         data: {
-          userId: req.user.parentId ? req.user.parentId : req.user.id,
           brandId,
           categoryId,
           subcategoryId,
@@ -668,6 +673,8 @@ export const updateProduct = async (req, res) => {
           isFeatured: isFeatured === "true" ? true : false,
           updatedBy: req.user.id,
           slug: name ? slugify(name) : findProduct.slug,
+          paddleProductId,
+          paddlePriceId,
 
         },
       });
@@ -756,7 +763,7 @@ export const updateProduct = async (req, res) => {
 export const updateProductAttribute = async (req, res) => {
   try {
     return await prisma.$transaction(async (tx) => {
-      const { size, costPrice, retailPrice, discountPercent, stockAmount } =
+      const { size, costPrice, retailPrice, discountPercent, stockAmount, paddlePriceId } =
         req.body;
 
       //get particular product attribute for calculating discount prices
@@ -802,6 +809,7 @@ export const updateProductAttribute = async (req, res) => {
             Number(retailPrice) -
             Number(retailPrice) * (Number(discountPercent) / 100),
           stockAmount: Number(stockAmount),
+          paddlePriceId: paddlePriceId,
           // updatedBy: req.user.id,
         },
       });
@@ -1123,6 +1131,8 @@ export const getProductsForCustomer = async (req, res) => {
         subsubcategory: { select: { name: true } },
         brand: { select: { name: true } },
         campaign: { select: { name: true } },
+        paddleProductId: true,
+        paddlePriceId: true,
         images: { select: { image: true } },
         productAttributes: {
           select: {
@@ -1134,6 +1144,7 @@ export const getProductsForCustomer = async (req, res) => {
             discountPrice: true,
             discountedRetailPrice: true,
             stockAmount: true,
+            paddlePriceId: true,
           },
         },
         createdAt: true,
@@ -1222,6 +1233,7 @@ export const getTrendingProductsForCustomer = async (req, res) => {
         brand: { select: { name: true } },
         campaign: { select: { name: true } },
         images: { select: { image: true } },
+        paddlePriceId: true,
         productAttributes: {
           select: {
             id: true,
@@ -1324,6 +1336,7 @@ export const getFeaturedProductsForCustomer = async (req, res) => {
         brand: { select: { name: true } },
         campaign: { select: { name: true } },
         images: { select: { image: true } },
+        paddlePriceId: true,
         productAttributes: {
           select: {
             id: true,
@@ -1408,6 +1421,7 @@ export const getProductForCustomer = async (req, res) => {
         brand: { select: { name: true } },
         campaign: { select: { name: true } },
         images: { select: { image: true } },
+        paddlePriceId: true,
         productAttributes: {
           select: {
             id:true,

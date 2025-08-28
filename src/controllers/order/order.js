@@ -1268,7 +1268,7 @@ export const getUserLicenses = async (req, res) => {
 // POST a new bundle
 export const createBundle = async (req, res) => {
   try {
-    const { title, price, regularPrice, discountPrice, mockups } = req.body;
+    const { title, price, regularPrice, discountPrice, mockups, paddleProductId, paddlePriceId } = req.body;
 
     if (!title || !price || !regularPrice || !mockups) {
       return res.status(400).json({
@@ -1284,6 +1284,8 @@ export const createBundle = async (req, res) => {
         regularPrice: parseFloat(regularPrice),
         discountPrice: parseFloat(discountPrice),
         mockups: parseInt(mockups),
+        paddleProductId: paddleProductId, 
+        paddlePriceId: paddlePriceId
       },
     });
 
@@ -1305,9 +1307,12 @@ export const createBundle = async (req, res) => {
 export const updateBundle = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, price, regularPrice, discountPrice, mockups } = req.body;
+    const { title, price, regularPrice, discountPrice, mockups, paddleProductId, paddlePriceId } = req.body;
+
+    console.log('inside update  bundle');
 
     if (!title || !price || !regularPrice || !mockups) {
+      console.log("Missing fields:", { title, price, regularPrice, mockups });
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -1322,6 +1327,8 @@ export const updateBundle = async (req, res) => {
         regularPrice: parseFloat(regularPrice),
         discountPrice: parseFloat(discountPrice),
         mockups: parseInt(mockups),
+        paddleProductId: paddleProductId, 
+        paddlePriceId: paddlePriceId
       },
     });
 
