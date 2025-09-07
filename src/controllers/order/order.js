@@ -12,8 +12,8 @@ import axios from "axios";
 
 const module_name = "order";
 
-const store_id = "strik679cf43feb667";
-const store_passwd = "strik679cf43feb667@ssl";
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASSWORD;
 const is_live = false; //true for live, false for sandbox
 
 //create order

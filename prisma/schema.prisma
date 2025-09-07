@@ -8,33 +8,31 @@ datasource db {
 }
 
 model Role {
-  id        String   @id @default(uuid())
-  name      String
-  price     Float?   @default(0)
-  isDeleted Boolean  @default(false)
-  createdBy String?
-  updatedBy String?
-  deletedBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  modules     Module[]
+  id          String       @id @default(uuid())
+  name        String
+  price       Float?       @default(0)
+  isDeleted   Boolean      @default(false)
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   roleModules RoleModule[]
   users       User[]
+  modules     Module[]     @relation("ModuleToRole")
 }
 
 model Module {
-  id        String   @id @default(uuid())
-  name      String
-  isDeleted Boolean  @default(false)
-  createdBy String?
-  updatedBy String?
-  deletedBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  roles       Role[]
+  id          String       @id @default(uuid())
+  name        String
+  isDeleted   Boolean      @default(false)
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   roleModules RoleModule[]
+  roles       Role[]       @relation("ModuleToRole")
 }
 
 model RoleModule {
@@ -47,17 +45,15 @@ model RoleModule {
   deletedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id                   String   @id @default(uuid())
+  id                   String               @id @default(uuid())
   roleId               String?
   parentId             String?
   name                 String
-  fullname             String
   email                String
   phone                String?
   address              String?
@@ -65,51 +61,50 @@ model User {
   country              String?
   city                 String?
   postalCode           String?
-  about                String?
-  language             String?
-  state                String?
-  apartment            String?
-  billingFirstName     String?
-  billingLastName      String?
-  billingCompany       String?
-  billingCountry       String?
-  billingEmail         String?
-  billingPhone         String?
-  image                String?  @default("images/user/user.png")
-  password             String?  @db.Text
+  image                String?              @default("images/user/user.png")
+  password             String?
   otp                  Int?
-  otpCount             Int?     @default(0)
-  initialPaymentAmount Float?   @default(0)
-  initialPaymentDue    Float?   @default(0)
-  installmentTime      Float?   @default(0)
-  refreshToken         String?  @db.Text
-  isActive             Boolean  @default(true)
-  isDeleted            Boolean  @default(false)
+  otpCount             Int?                 @default(0)
+  initialPaymentAmount Float?               @default(0)
+  initialPaymentDue    Float?               @default(0)
+  installmentTime      Float?               @default(0)
+  refreshToken         String?
+  isActive             Boolean              @default(true)
+  isDeleted            Boolean              @default(false)
   createdBy            String?
   updatedBy            String?
   deletedBy            String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  role     Role?  @relation(fields: [roleId], references: [id])
-  parent   User?  @relation("ParentIdUserId", fields: [parentId], references: [id])
-  children User[] @relation("ParentIdUserId")
-
-  payments            Payment[]
-  categories          Category[]
-  campaigns           Campaign[]
-  suppliers           Supplier[]
-  products            Product[]
-  wishlist            Wishlist[]
-  review              Review[]
-  order               Order[]
-  preorder            Preorder[]
-  credits             Int?                 @default(0) // Total bundle credits
-  creditsUsed         Int?                 @default(0) // How many used
-  licenseCertificates LicenseCertificate[]
-  downloadUrls        DownloadUrl[]
-  bundleOrder         BundleOrder[]
-  resetTokens         PasswordResetToken[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  fullname             String
+  about                String?
+  apartment            String?
+  billingCompany       String?
+  billingCountry       String?
+  billingEmail         String?
+  billingFirstName     String?
+  billingLastName      String?
+  billingPhone         String?
+  language             String?
+  state                String?
+  credits              Int?                 @default(0)
+  creditsUsed          Int?                 @default(0)
+  bundleOrder          BundleOrder[]
+  campaigns            Campaign[]
+  categories           Category[]
+  downloadUrls         DownloadUrl[]
+  licenseCertificates  LicenseCertificate[]
+  order                Order[]
+  resetTokens          PasswordResetToken[]
+  payments             Payment[]
+  preorder             Preorder[]
+  products             Product[]
+  review               Review[]
+  suppliers            Supplier[]
+  parent               User?                @relation("ParentIdUserId", fields: [parentId], references: [id])
+  children             User[]               @relation("ParentIdUserId")
+  role                 Role?                @relation(fields: [roleId], references: [id])
+  wishlist             Wishlist[]
 }
 
 model Banner {
@@ -117,10 +112,10 @@ model Banner {
   title     String
   subtitle  String
   image     String
-  url       String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  url       String?
 }
 
 model Payment {
@@ -135,60 +130,56 @@ model Payment {
   deletedBy String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String
-  image     String?  @default("images/category/category.png")
-  slug      String
-  createdBy String?
-  updatedBy String?
-  deletedBy String?
-  isActive  Boolean  @default(true)
-  isDeleted Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String           @id @default(uuid())
+  userId         String
+  name           String
+  image          String?          @default("images/category/category.png")
+  slug           String
+  createdBy      String?
+  updatedBy      String?
+  deletedBy      String?
+  isActive       Boolean          @default(true)
+  isDeleted      Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   campaigns      Campaign[]
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   products       Product[]
   subcategory    Subcategory[]
   subsubcategory Subsubcategory[]
 }
 
 model Subcategory {
-  id         String   @id @default(uuid())
-  categoryId String
-  name       String   @unique
-  image      String?
-  slug       String   @db.Text
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
+  id             String           @id @default(uuid())
+  categoryId     String
+  name           String           @unique
+  image          String?
+  slug           String
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  product        Product[]
   category       Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subsubcategory Subsubcategory[]
-  product        Product[]
 }
 
 model Subsubcategory {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   categoryId    String
   subcategoryId String
-  name          String   @unique
+  name          String      @unique
   image         String?
-  slug          String   @db.Text
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  subcategory Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  product     Product[]
+  slug          String
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  product       Product[]
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
 }
 
 model Campaign {
@@ -207,26 +198,24 @@ model Campaign {
   isDeleted  Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-
-  category Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product  Product[]
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product[]
 }
 
 model Brand {
-  id        String   @id @default(uuid())
-  name      String   @unique
+  id        String    @id @default(uuid())
+  name      String    @unique
   image     String?
-  slug      String   @db.Text
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  product Product[]
+  slug      String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  product   Product[]
 }
 
 model Supplier {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   name      String
   address   String
@@ -235,84 +224,81 @@ model Supplier {
   createdBy String?
   updatedBy String?
   deletedBy String?
-  isDeleted Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
+  isDeleted Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Product {
-  id               String          @id @default(uuid())
-  userId           String?
-  categoryId       String
-  subcategoryId    String?
-  subsubcategoryId String?
-  campaignId       String?
-  supplierId       String?
-  brandId          String?
-  productCode      String?         @default(nanoid(6))
-  barcode          String?         @default(nanoid(12))
-  name             String
-  shortDescription String?         @db.Text
-  longDescription  String?         @db.Text
-  fileSize         String?
-  resolution       String?
-  sku              String?
-  isTrending       Boolean         @default(false)
-  isFeatured       Boolean         @default(false)
-  viewCount        Int?            @default(0)
-  slug             String
-  downloadUrl      String?
-  createdBy        String?
-  updatedBy        String?
-  deletedBy        String?
-  isActive         Boolean         @default(true)
-  isDeleted        Boolean         @default(false)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  paddleProductId  String?
-  paddlePriceId    String?
-  user             User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category         Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  campaign         Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  supplier         Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  brand            Brand?          @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  subcategory      Subcategory?    @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  subsubcategory   Subsubcategory? @relation(fields: [subsubcategoryId], references: [id], onDelete: Cascade)
-
-  images              ProductImage[]
-  productAttributes   ProductAttribute[]
-  orderItems          OrderItem[]
-  wishlist            Wishlist[]
-  review              Review[]
-  preorder            Preorder[]
-  licenseCertificates LicenseCertificate[]
+  id                  String               @id @default(uuid())
+  userId              String?
+  categoryId          String
+  subcategoryId       String?
+  subsubcategoryId    String?
+  campaignId          String?
+  supplierId          String?
+  brandId             String?
+  productCode         String?              @default(nanoid(6))
+  barcode             String?              @default(nanoid(12))
+  name                String
+  shortDescription    String?
+  longDescription     String?
+  sku                 String?
+  isTrending          Boolean              @default(false)
+  isFeatured          Boolean              @default(false)
+  viewCount           Int?                 @default(0)
+  slug                String
+  createdBy           String?
+  updatedBy           String?
+  deletedBy           String?
+  isActive            Boolean              @default(true)
+  isDeleted           Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  fileSize            String?
+  resolution          String?
+  downloadUrl         String?
+  paddlePriceId       String?
+  paddleProductId     String?
   downloadUrls        DownloadUrl[]
+  licenseCertificates LicenseCertificate[]
+  orderItems          OrderItem[]
+  preorder            Preorder[]
+  brand               Brand?               @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  campaign            Campaign?            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory         Subcategory?         @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  subsubcategory      Subsubcategory?      @relation(fields: [subsubcategoryId], references: [id], onDelete: Cascade)
+  supplier            Supplier?            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productAttributes   ProductAttribute[]
+  images              ProductImage[]
+  review              Review[]
+  wishlist            Wishlist[]
 }
 
 model ProductAttribute {
-  id                    String   @id @default(uuid())
+  id                    String      @id @default(uuid())
   productId             String
   size                  String
   costPrice             Float
   retailPrice           Float
-  discountPercent       Float?   @default(0)
-  discountPrice         Float?   @default(0)
+  discountPercent       Float?      @default(0)
+  discountPrice         Float?      @default(0)
   discountedRetailPrice Float
   stockAmount           Float
-  isDeleted             Boolean  @default(false)
+  isDeleted             Boolean     @default(false)
   createdBy             String?
   updatedBy             String?
   deletedBy             String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
   paddlePriceId         String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItem OrderItem[]
-  preorder  Preorder[]
+  orderItem             OrderItem[]
+  preorder              Preorder[]
+  product               Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductImage {
@@ -325,25 +311,15 @@ model ProductImage {
   deletedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-enum OrderStatus {
-  PENDING
-  INPROGRESS
-  DELIVERED
-  REFUNDED
-  CANCELED
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {
-  id                     String       @id @default(uuid())
+  id                     String               @id @default(uuid())
   userId                 String?
   couponId               String?
-  invoiceNumber          String?      @default(nanoid(6))
+  invoiceNumber          String?              @default(nanoid(6))
   customerName           String?
-  invoiceHtml            String?      @db.Text
   customerPhone          String?
   customerAddress        String?
   customerBillingAddress String?
@@ -353,35 +329,33 @@ model Order {
   totalItems             Float?
   subtotalCost           Float?
   subtotal               Float?
-  paymentMethod          String?      @default("COD")
-  status                 OrderStatus? @default(PENDING)
+  paymentMethod          String?              @default("COD")
+  status                 OrderStatus?         @default(PENDING)
   otp                    String?
   deliveryChargeInside   Float?
   deliveryChargeOutside  Float?
-
-  billingFirstName String?
-  billingLastName  String?
-  billingCompany   String?
-  billingCountry   String?
-  billingEmail     String?
-  billingPhone     String?
-  address          String?
-  apartment        String?
-  city             String?
-  state            String?
-  postalCode       String?
-
-  isDeleted Boolean  @default(false)
-  createdBy String?
-  updatedBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  coupon              Coupon?              @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  user                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems          OrderItem[]
-  licenseCertificates LicenseCertificate[]
-  downloadUrls        DownloadUrl[]
+  isDeleted              Boolean              @default(false)
+  createdBy              String?
+  updatedBy              String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  address                String?
+  apartment              String?
+  billingCompany         String?
+  billingCountry         String?
+  billingEmail           String?
+  billingFirstName       String?
+  billingLastName        String?
+  billingPhone           String?
+  city                   String?
+  postalCode             String?
+  state                  String?
+  invoiceHtml            String?
+  downloadUrls           DownloadUrl[]
+  licenseCertificates    LicenseCertificate[]
+  coupon                 Coupon?              @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user                   User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems             OrderItem[]
 }
 
 model OrderItem {
@@ -405,10 +379,10 @@ model OrderItem {
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   bundleOrderId         String?
-  order                 Order?            @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product               Product?          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productAttribute      ProductAttribute? @relation(fields: [productAttributeId], references: [id], onDelete: Cascade)
   bundleOrder           BundleOrder?      @relation("BundleOrderToOrderItems", fields: [bundleOrderId], references: [id])
+  order                 Order?            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productAttribute      ProductAttribute? @relation(fields: [productAttributeId], references: [id], onDelete: Cascade)
+  product               Product?          @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Wishlist {
@@ -417,9 +391,8 @@ model Wishlist {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Review {
@@ -427,12 +400,11 @@ model Review {
   productId String
   userId    String
   rating    Float
-  comment   String?  @db.Text
+  comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Coupon {
@@ -444,21 +416,19 @@ model Coupon {
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  order Order[]
+  order           Order[]
 }
 
 model Preorder {
-  id                 String   @id @default(uuid())
+  id                 String            @id @default(uuid())
   productId          String
-  productAttributeId String?
   userId             String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  product          Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productAttribute ProductAttribute? @relation(fields: [productAttributeId], references: [id], onDelete: Cascade)
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  productAttributeId String?
+  productAttribute   ProductAttribute? @relation(fields: [productAttributeId], references: [id], onDelete: Cascade)
+  product            Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Newsletter {
@@ -481,125 +451,110 @@ model Contact {
 }
 
 model brokerusers {
-  id                        String   @id @default(uuid())
-  margin_used               Int?
-  loginUsrid                String?
-  username                  String?
-  password                  String?
-  role                      String?
-  marginType                String?
-  segmentAllow              String?
-  intradaySquare            Boolean?
-  ledgerBalanceClose        Int?
-  profitTradeHoldMinSec     Int?
-  lossTradeHoldMinSec       Int?
-  mcx_maxExchLots           Int?
-  mcx_commissionType        String?
-  mcx_commission            Int?
-  mcx_maxLots               Int?
-  mcx_orderLots             Int?
-  mcx_limitPercentage       Int?
-  mcx_intraday              Int?
-  mcx_holding               Int?
-  mcxOPTBUY_commissionType  String?
-  mcxOPTBUY_commission      Int?
-  mcxOPTBUY_strike          Int?
-  mcxOPTBUY_allow           String?
-  mcxOPTSELL_commissionType String?
-  mcxOPTSELL_commission     Int?
-  mcxOPTSELL_strike         Int?
-  mcxOPTSELL_allow          String?
-
-  mcxOPT_maxLots          Int?
-  mcxOPT_orderLots        Int?
-  mcxOPT_limitPercentage  Int?
-  mcxOPT_intraday         Int?
-  mcxOPT_holding          Int?
-  mcxOPT_sellingOvernight String?
-
-  nse_maxExchLots        Int?
-  idxNSE_commissionType  String?
-  idxNSE_commission      Int?
-  idxNSE_maxLots         Int?
-  idxNSE_orderLots       Int?
-  idxNSE_limitPercentage Int?
-  idxNSE_intraday        Int?
-  idxNSE_holding         Int?
-
-  // Added for IDXOPTBUY
-  idxOPTBUY_commissionType String?
-  idxOPTBUY_commission     Int?
-  idxOPTBUY_strike         Int?
-  idxOPTBUY_allow          String?
-
-  // Added for IDXOPTSELL
-  idxOPTSELL_commissionType String?
-  idxOPTSELL_commission     Int?
-  idxOPTSELL_strike         Int?
-  idxOPTSELL_allow          String?
-
-  // Added for IDXOPT
-  idxOPT_maxLots              Int?
-  idxOPT_orderLots            Int?
+  id                          String   @id @default(uuid())
+  loginUsrid                  String?
+  username                    String?
+  password                    String?
+  role                        String?
+  marginType                  String?
+  segmentAllow                String?
+  ledgerBalanceClose          Int?
+  profitTradeHoldMinSec       Int?
+  lossTradeHoldMinSec         Int?
+  intradaySquare              Boolean?
+  mcx_commission              Int?
+  mcx_commissionType          String?
+  mcx_intraday                Int?
+  mcx_limitPercentage         Int?
+  mcx_maxExchLots             Int?
+  mcx_maxLots                 Int?
+  mcx_orderLots               Int?
+  mcxOPTBUY_allow             String?
+  mcxOPTBUY_commission        Int?
+  mcxOPTBUY_commissionType    String?
+  mcxOPTBUY_strike            Int?
+  mcxOPTSELL_allow            String?
+  mcxOPTSELL_commission       Int?
+  mcxOPTSELL_commissionType   String?
+  mcxOPTSELL_strike           Int?
+  mcxOPT_holding              Int?
+  mcxOPT_intraday             Int?
+  mcxOPT_limitPercentage      Int?
+  mcxOPT_maxLots              Int?
+  mcxOPT_orderLots            Int?
+  mcxOPT_sellingOvernight     String?
+  idxNSE_commission           Int?
+  idxNSE_commissionType       String?
+  idxNSE_holding              Int?
+  idxNSE_intraday             Int?
+  idxNSE_limitPercentage      Int?
+  idxNSE_maxLots              Int?
+  idxNSE_orderLots            Int?
+  nse_maxExchLots             Int?
+  idxOPTBUY_allow             String?
+  idxOPTBUY_commission        Int?
+  idxOPTBUY_commissionType    String?
+  idxOPTBUY_strike            Int?
+  idxOPTSELL_allow            String?
+  idxOPTSELL_commission       Int?
+  idxOPTSELL_commissionType   String?
+  idxOPTSELL_strike           Int?
+  idxOPT_expiryIntradayMargin Int?
   idxOPT_expiryLossHold       Int?
   idxOPT_expiryProfitHold     Int?
-  idxOPT_expiryIntradayMargin Int?
-  idxOPT_limitPercentage      Int?
-  idxOPT_intraday             Int?
   idxOPT_holding              Int?
+  idxOPT_intraday             Int?
+  idxOPT_limitPercentage      Int?
+  idxOPT_maxLots              Int?
+  idxOPT_orderLots            Int?
   idxOPT_sellingOvernight     String?
-
-  // Added for STKOPTBUY
-  stkOPTBUY_commissionType String?
-  stkOPTBUY_commission     Int?
-  stkOPTBUY_strike         Int?
-  stkOPTBUY_allow          String?
-
-  // Added for STKOPSELL
-  STKOPTSELL_commissionType String?
-  STKOPTSELL_commission     Int?
-  STKOPTSELL_strike         Int?
-  STKOPTSELL_allow          String?
-
-  //Added for STKOP
-
-  STKOPT_maxLots          Int?
-  STKOPT_orderLots        Int?
-  STKOPT_limitPercentage  Int?
-  STKOPT_intraday         Int?
-  STKOPT_holding          Int?
-  STKOPT_sellingOvernight String?
+  stkOPTBUY_allow             String?
+  stkOPTBUY_commission        Int?
+  stkOPTBUY_commissionType    String?
+  stkOPTBUY_strike            Int?
+  STKOPTSELL_allow            String?
+  STKOPTSELL_commission       Int?
+  STKOPTSELL_commissionType   String?
+  STKOPTSELL_strike           Int?
+  STKOPT_holding              Int?
+  STKOPT_intraday             Int?
+  STKOPT_limitPercentage      Int?
+  STKOPT_maxLots              Int?
+  STKOPT_orderLots            Int?
+  STKOPT_sellingOvernight     String?
+  mcx_holding                 Int?
+  margin_used                 Int?
 }
 
 model TradeOrder {
   id               String   @id @default(uuid())
-  scriptName       String? // Stock name
-  ltp              Float? // Last traded price
-  bidPrice         Float? // Bid price
-  askPrice         Float? // Ask price
-  ltq              Float? // Last traded quantity
-  orderType        String // "BUY" or "SELL"
-  lotSize          Int? // Lot size
-  orderLots        Int? // Order lots
-  quantity         Int? // Order quantity
-  priceType        String? // "Market" or "Limit"
-  isStopLossTarget Boolean? // Toggle for Stop Loss / Target
-  stopLoss         Float? // Stop Loss price (if applicable)
-  target           Float? // Target price (if applicable)
-  margin           Float? // Margin
-  carry            Float? // Carry value
-  marginLimit      Float? // Margin limit
-  userId           String? // User placing the order
-  createdAt        DateTime @default(now()) // Timestamp
+  scriptName       String?
+  ltp              Float?
+  bidPrice         Float?
+  askPrice         Float?
+  ltq              Float?
+  orderType        String
+  lotSize          Int?
+  orderLots        Int?
+  quantity         Int?
+  priceType        String?
+  isStopLossTarget Boolean?
+  stopLoss         Float?
+  target           Float?
+  margin           Float?
+  carry            Float?
+  marginLimit      Float?
+  userId           String?
+  createdAt        DateTime @default(now())
 }
 
 model Deposit {
   id            Int      @id @default(autoincrement())
   depositAmount Float?
   depositImage  String?
-  loginUserId   String? // Make it optional to prevent migration errors
-  depositType   String   @default("Deposit")
   createdAt     DateTime @default(now())
+  depositType   String   @default("Deposit")
+  loginUserId   String?
   status        String?
 }
 
@@ -611,11 +566,11 @@ model Withdraw {
   accountName   String?
   accountNumber String?
   ifsc          String?
-  loginUserId   String? // now optional
-  username      String? // now optional
   status        String   @default("Pending")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  loginUserId   String?
+  username      String?
 }
 
 model DownloadUrl {
@@ -624,43 +579,40 @@ model DownloadUrl {
   productId   String?
   orderId     String?
   downloadUrl String?
-  licenseType String?
-  licenseText String?  @db.Text
   createdAt   DateTime @default(now())
-
-  user  User?  @relation(fields: [userId], references: [id])
-  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  product Product? @relation(fields: [productId], references: [id])
+  licenseText String?
+  licenseType String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
 }
 
 model LicenseCertificate {
-  id            String   @id @default(uuid())
+  id            String       @id @default(uuid())
   userId        String?
   orderId       String?
   productId     String?
   licenseType   String
-  licenseText   String   @db.Text
-  downloadUrl   String? // optional
+  licenseText   String
+  downloadUrl   String?
+  createdAt     DateTime     @default(now())
   bundleOrderId String?
-  createdAt     DateTime @default(now())
-
-  user        User?        @relation(fields: [userId], references: [id])
-  order       Order?       @relation(fields: [orderId], references: [id])
-  product     Product?     @relation(fields: [productId], references: [id])
-  bundleOrder BundleOrder? @relation(fields: [bundleOrderId], references: [id])
+  bundleOrder   BundleOrder? @relation(fields: [bundleOrderId], references: [id])
+  order         Order?       @relation(fields: [orderId], references: [id])
+  product       Product?     @relation(fields: [productId], references: [id])
+  user          User?        @relation(fields: [userId], references: [id])
 }
 
 model Bundle {
-  id            String   @id @default(cuid())
-  title         String?
-  price         Float?
-  regularPrice  Float?
-  discountPrice Float?
-  mockups       Int?
-  paddleProductId  String?
-  paddlePriceId    String?
-  createdAt     DateTime @default(now())
+  id              String   @id @default(cuid())
+  title           String?
+  price           Float?
+  regularPrice    Float?
+  discountPrice   Float?
+  mockups         Int?
+  createdAt       DateTime @default(now())
+  paddlePriceId   String?
+  paddleProductId String?
 }
 
 model BundleOrder {
@@ -674,24 +626,23 @@ model BundleOrder {
   address             String
   city                String
   postalCode          String
-  invoiceHtml         String?              @db.Text
   totalItems          Int
   subtotal            Float
-  user                User                 @relation(fields: [userId], references: [id])
-  orderItems          OrderItem[]          @relation("BundleOrderToOrderItems") // reverse relation
   createdAt           DateTime             @default(now())
+  invoiceHtml         String?
+  user                User                 @relation(fields: [userId], references: [id])
   licenseCertificates LicenseCertificate[]
+  orderItems          OrderItem[]          @relation("BundleOrderToOrderItems")
 }
 
 model PasswordResetToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
-
 
 model Blog {
   id          Int      @id @default(autoincrement())
@@ -699,4 +650,12 @@ model Blog {
   description String?
   image       String?
   createdAt   DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  INPROGRESS
+  DELIVERED
+  REFUNDED
+  CANCELED
 }

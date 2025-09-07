@@ -1036,48 +1036,49 @@ export const banProduct = async (req, res) => {
 //delete product
 export const deleteProduct = async (req, res) => {
   try {
-    return await prisma.$transaction(async (tx) => {
-    const product = await tx.product.delete({
-  where: { id: req.params.id },
-});
-
-
-      if (product) {
-        const productImage = await prisma.productImage.findMany({
-          where: { productId: req.params.id },
-        });
-
-        const productImageLength = productImage.length;
-
-        //delete images from folder
-        if (productImage) {
-          for (let i = 0; i < productImageLength; i++) {
-            // fs.unlinkSync(
-            //   `public\\images\\${module_name}\\${
-            //     productImage[i].image.split("/")[2]
-            //   }`
-            // );
-            await deleteFromCloudinary(
-              productImage[i].image,
-              async (error, result) => {
-                console.log("error", error);
-                console.log("result", result);
-              }
-            );
-          }
-        }
-        return res
-          .status(200)
-          .json(jsonResponse(true, `Product has been deleted`, product));
-      } else {
-        return res
-          .status(404)
-          .json(jsonResponse(false, "Product has not been deleted", null));
-      }
+    const product = await prisma.product.findUnique({
+      where: { id: req.params.id },
+      include: { images: true },
     });
+
+    if (!product) {
+      return res
+        .status(404)
+        .json(jsonResponse(false, "Product not found", null));
+    }
+
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      const deletePromises = product.images.map((image) => {
+        return new Promise((resolve, reject) => {
+          deleteFromCloudinary(image.image, (error, result) => {
+            if (error) {
+              console.error("Cloudinary deletion error:", error);
+              // Resolve even if there is an error to not block product deletion
+              resolve(null);
+            } else {
+              console.log("Cloudinary deletion result:", result);
+              resolve(result);
+            }
+          });
+        });
+      });
+      await Promise.all(deletePromises);
+    }
+
+    // Delete product from database
+    await prisma.product.delete({
+      where: { id: req.params.id },
+    });
+
+    return res
+      .status(200)
+      .json(jsonResponse(true, "Product has been deleted", product));
   } catch (error) {
-    console.log(error);
-    return res.status(500).json(jsonResponse(false, error, null));
+    console.error("Delete product error:", error);
+    return res
+      .status(500)
+      .json(jsonResponse(false, "Failed to delete product", null));
   }
 };
 
@@ -1244,6 +1245,7 @@ export const getTrendingProductsForCustomer = async (req, res) => {
             discountPrice: true,
             discountedRetailPrice: true,
             stockAmount: true,
+            paddlePriceId: true,
           },
         },
         createdAt: true,
@@ -1347,6 +1349,7 @@ export const getFeaturedProductsForCustomer = async (req, res) => {
             discountPrice: true,
             discountedRetailPrice: true,
             stockAmount: true,
+            paddlePriceId: true,
           },
         },
         createdAt: true,
@@ -1432,6 +1435,7 @@ export const getProductForCustomer = async (req, res) => {
             discountPrice: true,
             discountedRetailPrice: true,
             stockAmount: true,
+            paddlePriceId: true,
           },
         },
         createdAt: true,
